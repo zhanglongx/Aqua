@@ -15,22 +15,22 @@ import (
 
 // pathDB is the row-query struct.
 type pathDB struct {
-	// card slot number
+	// sub-card slot number
 	Slot driver.SlotID
 
-	// card name
+	// sub-card name
 	Name driver.NameID
 
-	// card IP
+	// sub-card IP
 	IP driver.IP
 
-	// worker ID
+	// sub-card's worker ID
 	WorkerID driver.WorkerID
 
-	// status
+	// path's status
 	IsRunning driver.IsRunning
 
-	// pathCfg can be loaded, but not validate this time
+	// pathDB can be loaded, but not validate this time
 	validate bool
 }
 
@@ -51,6 +51,12 @@ func (c *DB) LoadFromFile(JFile string) error {
 	c.lock.Lock()
 
 	defer c.lock.Unlock()
+
+	// f, err := os.Open(JFile)
+	// if err != nil {
+
+	// }
+
 	return nil
 }
 
@@ -59,7 +65,8 @@ func (c *DB) SaveToFile(JFile string) error {
 	return nil
 }
 
-// Update changes pathCfg based on pathID
+// Update changes pathCfg based on pathID, will replace
+// pathDB if it's not validate
 func (c *DB) Update(ID pathID, input pathDB) {
 
 }
