@@ -10,5 +10,5 @@ package manager
 // pathID is the path's ID
 type pathID string
 
-// InValidatePathID is ID of Invalidate
-const InValidatePathID pathID = ""
+// InValidPathID is ID of Invalidate
+const InValidPathID pathID = ""

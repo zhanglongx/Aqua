@@ -133,8 +133,8 @@ func (d *DB) query(p *pathRow) pathID {
 	return InValidPathID
 }
 
-// update add a new pathRow to DB
-func (d *DB) update(ID pathID, p *pathRow) error {
+// add add a new pathRow to DB
+func (d *DB) add(ID pathID, p *pathRow) error {
 	d.lock.Lock()
 
 	defer d.lock.Unlock()
