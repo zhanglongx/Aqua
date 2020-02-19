@@ -24,3 +24,6 @@ type WorkerID int
 
 // IsRunning is Worker's status, on/off
 type IsRunning bool
+
+// Resource is shared between path
+type Resource string

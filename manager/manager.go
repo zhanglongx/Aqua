@@ -7,4 +7,8 @@
 // config loading, sub-card's worker setting
 package manager
 
+// pathID is the path's ID
 type pathID string
+
+// InValidatePathID is ID of Invalidate
+const InValidatePathID pathID = ""
