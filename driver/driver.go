@@ -12,15 +12,15 @@ import "net"
 // SlotID is sub-card's Physical SlotID Number
 type SlotID int
 
+// WorkerID is sub-card's WorkID, WorkID is uniqual in one sub
+// card scope
+type WorkerID int
+
 // NameID is sub-card's NameID
 type NameID string
 
 // IP is sub-card's IP
 type IP net.IP
-
-// WorkerID is sub-card's WorkID, WorkID is uniqual in one sub
-// card scope
-type WorkerID int
 
 // IsRunning is Worker's status, on/off
 type IsRunning bool

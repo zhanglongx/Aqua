@@ -7,10 +7,10 @@
 package manager
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net"
 	"sync"
 
 	"github.com/zhanglongx/Aqua/comm"
@@ -25,23 +25,20 @@ type pathRow struct {
 	// sub-card slot number
 	Slot driver.SlotID
 
+	// sub-card's worker ID
+	WorkerID driver.WorkerID
+
 	// sub-card name
 	Name driver.NameID
 
 	// sub-card IP
 	IP driver.IP
 
-	// sub-card's worker ID
-	WorkerID driver.WorkerID
-
 	// path's status
 	IsRunning driver.IsRunning
 
 	// input resource
 	InRes []driver.Resource
-
-	// output resource
-	OutRes driver.Resource
 }
 
 // DB contains all path' config. It's degsinged to be easily
@@ -78,6 +75,7 @@ func (d *DB) loadFromFile(JFile string) error {
 	// FIXME: more compatible
 	if d.Version != DBVER {
 		comm.Error.Printf("DB file ver error: %s\n", d.Version)
+		d.Config = make(map[pathID]*pathRow, 0)
 		return errJSONFILE
 	}
 
@@ -106,8 +104,8 @@ func (d *DB) saveToFile(JFile string) error {
 	return nil
 }
 
-// query queries pathID on pathRow, and return path's IsRunning
-// to caller
+// query queries pathID on pathRow, base on Slot, WorkerID
+// IP and return pathID
 func (d *DB) query(p *pathRow) pathID {
 	if p == nil {
 		return InValidPathID
@@ -119,13 +117,11 @@ func (d *DB) query(p *pathRow) pathID {
 
 	for k, c := range d.Config {
 		if c.Slot == p.Slot &&
+			c.WorkerID == p.WorkerID &&
 			c.Name == p.Name &&
-			bytes.Compare(c.IP, p.IP) == 0 &&
-			c.WorkerID == p.WorkerID {
+			net.IP(c.IP).Equal(net.IP(p.IP)) {
 
-			p.IsRunning = c.IsRunning
-			p.InRes = c.InRes
-			p.OutRes = c.OutRes
+			// same as previous
 			return k
 		}
 	}
@@ -133,18 +129,28 @@ func (d *DB) query(p *pathRow) pathID {
 	return InValidPathID
 }
 
-// add add a new pathRow to DB
-func (d *DB) add(ID pathID, p *pathRow) error {
+// set set a new pathRow in DB, DON'T reuse
+// *pathRow return by get
+func (d *DB) set(ID pathID, p *pathRow) error {
 	d.lock.Lock()
 
 	defer d.lock.Unlock()
 
-	if d.Config[ID] != nil {
-		return errPathExists
-	}
-
-	d.Config[ID] = new(pathRow)
-	*d.Config[ID] = *p
+	d.Config[ID] = p
 
 	return nil
+}
+
+// get return a pathRow in DB, DON'T reuse
+// *pathRow return by set
+func (d *DB) get(ID pathID) *pathRow {
+	d.lock.RLock()
+
+	defer d.lock.RUnlock()
+
+	if d.Config[ID] == nil {
+		return nil
+	}
+
+	return d.Config[ID]
 }
