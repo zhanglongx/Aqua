@@ -27,3 +27,11 @@ type IsRunning bool
 
 // Resource is shared between path
 type Resource string
+
+// CtlCmd is ID style type for control()
+type CtlCmd int
+
+// Worker defines sub-cards basic operation
+type Worker interface {
+	Control(c CtlCmd) interface{}
+}
