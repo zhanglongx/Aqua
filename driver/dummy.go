@@ -37,16 +37,16 @@ const DummyName NameID = "Dummy"
 type Dummy struct {
 }
 
-// DummyWorker is the main struct for sub-card's Workder
+// DummyWorker is the main struct for sub-card's Worker
 type DummyWorker struct {
 	// SlotID here
-	slot SlotID
+	Slot SlotID
 
 	// WorkerID here
-	workerID WorkerID
+	WorkerID WorkerID
 
 	// IP here
-	ip IP
+	IP IP
 }
 
 // Open sub-card, do initialization. And return slice of
@@ -56,9 +56,9 @@ type DummyWorker struct {
 // in sub-card
 func (d *Dummy) Open(s SlotID, IP IP) []Worker {
 	var w *DummyWorker = &DummyWorker{
-		slot:     s,
-		workerID: 0,
-		ip:       IP,
+		Slot:     s,
+		WorkerID: 0,
+		IP:       IP,
 	}
 
 	comm.Info.Printf("Open %s successfully", DummyName)
@@ -76,7 +76,7 @@ func (d *Dummy) Close() error {
 // String provide printf family interface{}. The manager
 // can use it to gerenerate Worker list
 func (w *DummyWorker) String() string {
-	return fmt.Sprintf("%s_%d_%d", DummyName, w.slot, w.workerID)
+	return fmt.Sprintf("%s_%d_%d", DummyName, w.Slot, w.WorkerID)
 }
 
 // Control do quering and setting, like querying version,

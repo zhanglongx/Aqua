@@ -28,10 +28,22 @@ type IsRunning bool
 // Resource is shared between path
 type Resource string
 
+// CtlCmd ID style const
+const (
+	CtlCmdStart = iota
+	CtlCmdStop
+)
+
 // CtlCmd is ID style type for control()
 type CtlCmd int
 
 // Worker defines sub-cards basic operation
 type Worker interface {
 	Control(c CtlCmd) interface{}
+}
+
+// Encoder defines Encoder family operation
+type Encoder interface {
+	Worker
+	Encoder() Resource
 }
