@@ -6,6 +6,7 @@
 package driver
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 
@@ -40,6 +41,16 @@ func (l *LocalE) Open(s SlotID, IP IP) []Worker {
 	return []Worker{w}
 }
 
+// Close method
+func (l *LocalE) Close() error {
+	return nil
+}
+
+// String method
+func (w *LocalEWorker) String() string {
+	return fmt.Sprintf("%s_%d_%d", LocalEncoderName, w.Slot, w.WorkerID)
+}
+
 // Control method
 func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	switch c {
@@ -48,7 +59,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			"-vcode", "copy", "http://localhost:1234/feed1.ffm")
 		if err := cmd.Start(); err != nil {
 			comm.Error.Printf("run ffmpeg failed\n")
-			return nil
+			return errors.New("run ffmpeg failed")
 		}
 	case CtlCmdStop:
 	default:
