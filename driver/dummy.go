@@ -11,7 +11,7 @@ import (
 	"github.com/zhanglongx/Aqua/comm"
 )
 
-// Dummy is a great start to write sub-card's driver.
+// Dummy is a good start to write sub-card's driver.
 // There are two main struct in one driver:
 //
 // type Dummy struct {

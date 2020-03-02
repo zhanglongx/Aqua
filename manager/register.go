@@ -5,5 +5,49 @@
 
 package manager
 
+import (
+	"errors"
+	"net"
+
+	"github.com/zhanglongx/Aqua/comm"
+	"github.com/zhanglongx/Aqua/driver"
+)
+
 type reg struct {
+}
+
+type regInfo struct {
+	slot driver.SlotID
+
+	name driver.NameID
+
+	ip driver.IP
+}
+
+func (r *reg) Register() (Workers, error) {
+
+	// tempz
+	var cards []regInfo = []regInfo{
+		{0, "local_encoder", driver.IP(net.IPv4(192, 165, 56, 35))},
+	}
+
+	var retErr error = nil
+	workers := make(Workers)
+
+	// TODO: prevent re-register
+	for _, found := range cards {
+		var card driver.Card
+		switch found.name {
+		case "local_encoder":
+			card = &driver.LocalE{}
+		default:
+			comm.Error.Printf("unknown card type %s", found.name)
+			retErr = errors.New("unknown card")
+			continue
+		}
+
+		workers[found.slot] = card.Open(found.slot, found.ip)
+	}
+
+	return workers, retErr
 }
