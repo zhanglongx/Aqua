@@ -11,7 +11,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net"
-	"sync"
 
 	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/driver"
@@ -44,10 +43,10 @@ type pathRow struct {
 // DB contains all path' config. It's degsinged to be easily
 // exported to file (like JSON).
 type DB struct {
-	lock sync.RWMutex
-
+	// Version should be used to check DB's compatibility
 	Version string
 
+	// Config stores all the configurations
 	Config map[pathID]*pathRow
 }
 
@@ -56,9 +55,6 @@ var errPathExists = errors.New("DB: path already exists")
 
 // loadFromFile load JSON file to Cfg
 func (d *DB) loadFromFile(JFile string) error {
-	d.lock.Lock()
-
-	defer d.lock.Unlock()
 
 	buf, err := ioutil.ReadFile(JFile)
 	if err != nil {
@@ -75,8 +71,9 @@ func (d *DB) loadFromFile(JFile string) error {
 	// FIXME: more compatible
 	if d.Version != DBVER {
 		comm.Error.Printf("DB file ver error: %s\n", d.Version)
+		comm.Error.Printf("Discarding old file: %s\n", JFile)
 		d.Config = make(map[pathID]*pathRow, 0)
-		return errJSONFILE
+		return nil
 	}
 
 	// all pathDB.validate will be set to false
@@ -85,9 +82,6 @@ func (d *DB) loadFromFile(JFile string) error {
 
 // saveToFile save JSON file to Cfg
 func (d *DB) saveToFile(JFile string) error {
-	d.lock.RLock()
-
-	defer d.lock.RUnlock()
 
 	buf, err := json.Marshal(d)
 	if err != nil {
@@ -107,13 +101,10 @@ func (d *DB) saveToFile(JFile string) error {
 // query queries pathID on pathRow, base on Slot, WorkerID
 // IP and return pathID
 func (d *DB) query(p *pathRow) pathID {
+
 	if p == nil {
 		return InValidPathID
 	}
-
-	d.lock.RLock()
-
-	defer d.lock.RUnlock()
 
 	for k, c := range d.Config {
 		if c.Slot == p.Slot &&
@@ -132,9 +123,6 @@ func (d *DB) query(p *pathRow) pathID {
 // set set a new pathRow in DB, DON'T reuse
 // *pathRow return by get
 func (d *DB) set(ID pathID, p *pathRow) error {
-	d.lock.Lock()
-
-	defer d.lock.Unlock()
 
 	d.Config[ID] = p
 
@@ -144,9 +132,6 @@ func (d *DB) set(ID pathID, p *pathRow) error {
 // get return a pathRow in DB, DON'T reuse
 // *pathRow return by set
 func (d *DB) get(ID pathID) *pathRow {
-	d.lock.RLock()
-
-	defer d.lock.RUnlock()
 
 	if d.Config[ID] == nil {
 		return nil
