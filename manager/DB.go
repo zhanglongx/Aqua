@@ -42,6 +42,10 @@ type pathRow struct {
 
 // DB contains all path' config. It's degsinged to be easily
 // exported to file (like JSON).
+// set() and get() are not thread-safe, it's caller's
+// responsibility to ensure that. To ensure data returned by
+// get() will not get rewritten, data from pathRow should be
+// copied before any unlock method.
 type DB struct {
 	// Version should be used to check DB's compatibility
 	Version string
@@ -98,8 +102,8 @@ func (d *DB) saveToFile(JFile string) error {
 	return nil
 }
 
-// query queries pathID on pathRow, base on Slot, WorkerID
-// IP and return pathID
+// query queries pathID on pathRow, if Slot, WorkerID, Name and IP
+// are identity, return pathID
 func (d *DB) query(p *pathRow) pathID {
 
 	if p == nil {
@@ -120,8 +124,9 @@ func (d *DB) query(p *pathRow) pathID {
 	return InValidPathID
 }
 
-// set set a new pathRow in DB, DON'T reuse
-// *pathRow return by get
+// set set a new pathRow in DB, DB store *ONLY* the pointer
+// passed in, so make sure passing a whole new pathRow{}
+// everytime
 func (d *DB) set(ID pathID, p *pathRow) error {
 
 	d.Config[ID] = p
@@ -129,8 +134,9 @@ func (d *DB) set(ID pathID, p *pathRow) error {
 	return nil
 }
 
-// get return a pathRow in DB, DON'T reuse
-// *pathRow return by set
+// get return a *pathRow in DB. Because set() and get() are
+// not thread-safe, you should get data in *pathRow copied,
+// before using any unlock method
 func (d *DB) get(ID pathID) *pathRow {
 
 	if d.Config[ID] == nil {
