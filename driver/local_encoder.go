@@ -7,13 +7,14 @@ package driver
 
 import (
 	"fmt"
+	"net"
 	"os/exec"
 
 	"github.com/zhanglongx/Aqua/comm"
 )
 
 // LocalEncoderName is the sub-card's name
-const LocalEncoderName NameID = "local_encoder"
+const LocalEncoderName string = "local_encoder"
 
 const vlcExe = "c:\\Program Files\\VideoLAN\\VLC\\vlc.exe"
 const sout = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{sdp=rtsp://:8554/test}"
@@ -25,17 +26,19 @@ type LocalE struct {
 // LocalEWorker is the main struct for sub-card's
 // Worker
 type LocalEWorker struct {
-	Slot SlotID
+	Slot int
 
-	WorkerID WorkerID
+	WorkerID int
 
-	IP IP
+	IP net.IP
+
+	IsRunning bool
 
 	cmd *exec.Cmd
 }
 
 // Open method
-func (l *LocalE) Open(s SlotID, IP IP) []Worker {
+func (l *LocalE) Open(s int, IP net.IP) []Worker {
 	var w *LocalEWorker = &LocalEWorker{
 		Slot:     s,
 		WorkerID: 0,

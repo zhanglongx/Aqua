@@ -3,7 +3,6 @@
 // Use of this source code is governed by a GPLv3-style
 // license that can be found in the LICENSE file.
 
-// Package manager deals with
 package manager
 
 import (
@@ -21,20 +20,23 @@ const DBVER string = "1.0.0"
 
 // pathRow is the row-query struct.
 type pathRow struct {
+	// Path Name
+	PathName string
+
 	// sub-card slot number
-	Slot driver.SlotID
+	Slot int
 
 	// sub-card's worker ID
-	WorkerID driver.WorkerID
+	WorkerID int
 
 	// sub-card name
-	Name driver.NameID
+	CardName string
 
 	// sub-card IP
-	IP driver.IP
+	IP net.IP
 
 	// path's status
-	IsRunning driver.IsRunning
+	IsRunning bool
 
 	// input resource
 	InRes []driver.Resource
@@ -113,7 +115,7 @@ func (d *DB) query(p *pathRow) pathID {
 	for k, c := range d.Config {
 		if c.Slot == p.Slot &&
 			c.WorkerID == p.WorkerID &&
-			c.Name == p.Name &&
+			c.CardName == p.CardName &&
 			net.IP(c.IP).Equal(net.IP(p.IP)) {
 
 			// same as previous

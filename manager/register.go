@@ -17,18 +17,18 @@ type reg struct {
 }
 
 type regInfo struct {
-	slot driver.SlotID
+	slot int
 
-	name driver.NameID
+	name string
 
-	ip driver.IP
+	ip net.IP
 }
 
 func (r *reg) Register() (Workers, error) {
 
 	// tempz
 	var cards []regInfo = []regInfo{
-		{0, "local_encoder", driver.IP(net.IPv4(192, 165, 56, 35))},
+		{0, "local_encoder", net.IPv4(192, 165, 56, 35)},
 	}
 
 	var retErr error = nil

@@ -7,6 +7,7 @@ package driver
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/zhanglongx/Aqua/comm"
 )
@@ -31,7 +32,7 @@ import (
 // operation.
 
 // DummyName is the sub-card's name
-const DummyName NameID = "Dummy"
+const DummyName string = "Dummy"
 
 // Dummy is the main struct for sub-card
 type Dummy struct {
@@ -40,13 +41,13 @@ type Dummy struct {
 // DummyWorker is the main struct for sub-card's Worker
 type DummyWorker struct {
 	// SlotID here
-	Slot SlotID
+	Slot int
 
 	// WorkerID here
-	WorkerID WorkerID
+	WorkerID int
 
 	// IP here
-	IP IP
+	IP net.IP
 }
 
 // Open sub-card, do initialization. And return slice of
@@ -54,7 +55,7 @@ type DummyWorker struct {
 // to sub-card, and perform necessary communication with
 // it, as querying the hardware version or working path
 // in sub-card
-func (d *Dummy) Open(s SlotID, IP IP) []Worker {
+func (d *Dummy) Open(s int, IP net.IP) []Worker {
 	var w *DummyWorker = &DummyWorker{
 		Slot:     s,
 		WorkerID: 0,
