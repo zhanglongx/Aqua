@@ -4,10 +4,10 @@
         "0" : {
             "Slot": 0,
             "WorkerID": 0,
-            "Name": "hdmi_encoder",
+            "Name": "local_encoder",
             "IP": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 165, 53, 35],
             "IsRunning": true,
-            "InRes": ["rtsp://192.165.53.35:888"]
+            "InRes": ["rtsp://192.165.53.35:1234"]
         }
     }
 }
