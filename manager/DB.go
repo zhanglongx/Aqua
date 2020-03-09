@@ -7,7 +7,6 @@ package manager
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net"
 
@@ -55,9 +54,6 @@ type DB struct {
 	// Config stores all the configurations
 	Config map[pathID]*pathRow
 }
-
-var errJSONFILE = errors.New("DB: JSON File error")
-var errPathExists = errors.New("DB: path already exists")
 
 // loadFromFile load JSON file to Cfg
 func (d *DB) loadFromFile(JFile string) error {

@@ -5,21 +5,16 @@
 
 package manager
 
-import (
-	"fmt"
-
-	"github.com/zhanglongx/Aqua/driver"
-)
-
-// getWorker return generic worker's info
-func getWorker(w driver.Worker, data map[string]string) {
-
-	data[STRWORKER] = fmt.Sprintf("%v", w)
+// getPathName
+func getPathName(p *pathRow) string {
+	return p.PathName
 }
 
-func getPath(p *pathRow, data map[string]string) {
+// getPathRunning
+func getPathRunning(p *pathRow) string {
+	if p.IsRunning {
+		return "true"
+	}
 
-	data[STRPATH] = p.PathName
-	data[STRRUN] = fmt.Sprintf("%v", p.IsRunning)
-	// TODO: RES
+	return "false"
 }

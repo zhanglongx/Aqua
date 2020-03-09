@@ -7,12 +7,17 @@
 // driver should be in this package
 package driver
 
-import "net"
+import (
+	"net"
+
+	"github.com/zhanglongx/Aqua/comm"
+)
 
 // CtlCmd ID style const
 const (
 	CtlCmdStart = iota
 	CtlCmdStop
+	CtlCmdName
 )
 
 // CtlCmd is ID style type for control()
@@ -33,4 +38,30 @@ type Worker interface {
 type Encoder interface {
 	Worker
 	Encoder() Resource
+}
+
+// GetWorkerName return Worker's Name
+func GetWorkerName(w Worker) string {
+	if n, ok := w.Control(CtlCmdName).(string); ok {
+		return n
+	}
+
+	comm.Error.Printf("worker implements CtlCmdName incorrectly\n")
+	return ""
+}
+
+// SetWorkerRunning set Running status
+func SetWorkerRunning(w Worker, r bool) error {
+	if r {
+		if err, ok := w.Control(CtlCmdStart).(error); ok {
+			return err
+		}
+	} else {
+		if err, ok := w.Control(CtlCmdStop).(error); ok {
+			return err
+		}
+	}
+
+	comm.Error.Printf("worker implements CtlCmdStart/Stop incorrectly\n")
+	return nil
 }

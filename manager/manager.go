@@ -16,8 +16,8 @@ import (
 
 // STR defines for data
 const (
-	STRWORKER = "Worker"
 	STRPATH   = "PathName"
+	STRWORKER = "Worker"
 	STRRES    = "Res"
 	STRRUN    = "IsRunning"
 )
@@ -41,6 +41,10 @@ type Manager struct {
 	// Workers store all sub-card's Workers
 	Workers Workers
 }
+
+var (
+	errPathExists = errors.New("Path not exists")
+)
 
 // M is the instance of Manager
 var M Manager
@@ -89,14 +93,17 @@ func (m *Manager) Get(path pathID) (map[string]string, error) {
 	rowDB := m.DB.get(path)
 	if rowDB == nil {
 		// TODO: empty path?
-		return make(map[string]string), nil
+		return nil, errPathExists
 	}
 
 	data := make(map[string]string)
 
-	// XXX: make sure rowDB copied before return
-	getWorker(m.Workers[rowDB.Slot][rowDB.WorkerID], data)
-	getPath(rowDB, data)
+	w := m.Workers[rowDB.Slot][rowDB.WorkerID]
+
+	data[STRPATH] = getPathName(rowDB)
+	data[STRWORKER] = driver.GetWorkerName(w)
+	// tempz RES
+	data[STRRUN] = getPathRunning(rowDB)
 
 	return data, nil
 }

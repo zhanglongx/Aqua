@@ -32,8 +32,6 @@ type LocalEWorker struct {
 
 	IP net.IP
 
-	IsRunning bool
-
 	cmd *exec.Cmd
 }
 
@@ -53,11 +51,6 @@ func (l *LocalE) Close() error {
 	return nil
 }
 
-// String method
-func (w *LocalEWorker) String() string {
-	return fmt.Sprintf("%s_%d_%d", LocalEncoderName, w.Slot, w.WorkerID)
-}
-
 // Control method
 func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	switch c {
@@ -75,6 +68,9 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			comm.Error.Printf("vlc exit with error")
 			return err
 		}
+	case CtlCmdName:
+		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
+			w.Slot, w.WorkerID)
 	default:
 	}
 	return nil

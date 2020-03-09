@@ -74,16 +74,14 @@ func (d *Dummy) Close() error {
 	return nil
 }
 
-// String provide printf family interface{}. The manager
-// can use it to gerenerate Worker list
-func (w *DummyWorker) String() string {
-	return fmt.Sprintf("%s_%d_%d", DummyName, w.Slot, w.WorkerID)
-}
-
 // Control do quering and setting, like querying version,
 // setting paramenters. Return nil if ont all CtlCmd is
 // supported
 func (w *DummyWorker) Control(c CtlCmd) interface{} {
+	switch c {
+	case CtlCmdName:
+		return fmt.Sprintf("%s_%d_%d", LocalEncoderName, w.Slot, w.WorkerID)
+	}
 	return nil
 }
 
