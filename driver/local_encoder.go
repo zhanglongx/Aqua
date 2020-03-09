@@ -81,9 +81,13 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 }
 
 // Encode method
-func (w *LocalEWorker) Encode() Resource {
-	var r string
-	r = fmt.Sprintf("rtsp://%v:%d/test1.sdp", w.IP, 1235)
+func (w *LocalEWorker) Encode() []Resource {
 
-	return Resource(r)
+	var sdp SDP = SDP{CodecVideo: VideoH264,
+		CodecAudio: AudioMPGA,
+		PtVideo:    96,
+		PtAudio:    8,
+	}
+
+	return []Resource{InnerRes{IP: w.IP, Port: []int{1235}, SDP: sdp}}
 }

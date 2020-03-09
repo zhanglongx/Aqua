@@ -9,9 +9,6 @@ package driver
 
 import "net"
 
-// Resource is shared between path
-type Resource string
-
 // CtlCmd ID style const
 const (
 	CtlCmdStart = iota

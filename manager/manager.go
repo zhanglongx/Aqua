@@ -9,23 +9,18 @@ package manager
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/zhanglongx/Aqua/driver"
 )
 
-// STRWORKER for quering
-const STRWORKER = "Worker"
-
-// STRPATH for quering
-const STRPATH = "PathName"
-
-// STRRES for quering
-const STRRES = "Res"
-
-// STRRUN for quering
-const STRRUN = "IsRunning"
+// STR defines for data
+const (
+	STRWORKER = "Worker"
+	STRPATH   = "PathName"
+	STRRES    = "Res"
+	STRRUN    = "IsRunning"
+)
 
 // pathID is the path's ID
 type pathID string
@@ -93,25 +88,15 @@ func (m *Manager) Get(path pathID) (map[string]string, error) {
 
 	rowDB := m.DB.get(path)
 	if rowDB == nil {
+		// TODO: empty path?
 		return make(map[string]string), nil
 	}
 
 	data := make(map[string]string)
 
 	// XXX: make sure rowDB copied before return
-	m.getWorker(data, rowDB.Slot, rowDB.WorkerID)
-
-	data[STRPATH] = rowDB.PathName
-	data[STRRES] = fmt.Sprintf("%v", rowDB.InRes[0]) // tempz
-	data[STRRUN] = fmt.Sprintf("%v", rowDB.IsRunning)
+	getWorker(m.Workers[rowDB.Slot][rowDB.WorkerID], data)
+	getPath(rowDB, data)
 
 	return data, nil
-}
-
-// getWorker return generic worker's info
-func (m *Manager) getWorker(data map[string]string, s int, w int) {
-
-	worker := m.Workers[s][w]
-
-	data[STRWORKER] = fmt.Sprintf("%v", worker)
 }
