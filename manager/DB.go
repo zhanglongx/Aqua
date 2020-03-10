@@ -52,7 +52,7 @@ type DB struct {
 	Version string
 
 	// Config stores all the configurations
-	Config map[pathID]*pathRow
+	Config map[string]*pathRow
 }
 
 // loadFromFile load JSON file to Cfg
@@ -60,21 +60,21 @@ func (d *DB) loadFromFile(JFile string) error {
 
 	buf, err := ioutil.ReadFile(JFile)
 	if err != nil {
-		comm.Error.Printf("Read DB file %s failed\n", JFile)
+		comm.Error.Printf("Read DB file %s failed", JFile)
 		return err
 	}
 
 	err = json.Unmarshal(buf, d)
 	if err != nil {
-		comm.Error.Printf("Decode DB file %s failed\n", JFile)
+		comm.Error.Printf("Decode DB file %s failed", JFile)
 		return err
 	}
 
 	// FIXME: more compatible
 	if d.Version != DBVER {
-		comm.Error.Printf("DB file ver error: %s\n", d.Version)
-		comm.Error.Printf("Discarding old file: %s\n", JFile)
-		d.Config = make(map[pathID]*pathRow, 0)
+		comm.Error.Printf("DB file ver error: %s", d.Version)
+		comm.Error.Printf("Discarding old file: %s", JFile)
+		d.Config = make(map[string]*pathRow, 0)
 		return nil
 	}
 
@@ -87,13 +87,13 @@ func (d *DB) saveToFile(JFile string) error {
 
 	buf, err := json.Marshal(d)
 	if err != nil {
-		comm.Error.Printf("Encode DB %s failed\n", JFile)
+		comm.Error.Printf("Encode DB %s failed", JFile)
 		return err
 	}
 
 	err = ioutil.WriteFile(JFile, buf, 0644)
 	if err != nil {
-		comm.Error.Printf("Write DB file %s failed\n", JFile)
+		comm.Error.Printf("Write DB file %s failed", JFile)
 		return err
 	}
 
@@ -102,7 +102,7 @@ func (d *DB) saveToFile(JFile string) error {
 
 // query queries pathID on pathRow, if Slot, WorkerID, Name and IP
 // are identity, return pathID
-func (d *DB) query(p *pathRow) pathID {
+func (d *DB) query(p *pathRow) string {
 
 	if p == nil {
 		return InValidPathID
@@ -125,7 +125,7 @@ func (d *DB) query(p *pathRow) pathID {
 // set set a new pathRow in DB, DB store *ONLY* the pointer
 // passed in, so make sure passing a whole new pathRow{}
 // everytime
-func (d *DB) set(ID pathID, p *pathRow) error {
+func (d *DB) set(ID string, p *pathRow) error {
 
 	d.Config[ID] = p
 
@@ -135,7 +135,7 @@ func (d *DB) set(ID pathID, p *pathRow) error {
 // get return a *pathRow in DB. Because set() and get() are
 // not thread-safe, you should get data in *pathRow copied,
 // before using any unlock method
-func (d *DB) get(ID pathID) *pathRow {
+func (d *DB) get(ID string) *pathRow {
 
 	if d.Config[ID] == nil {
 		return nil

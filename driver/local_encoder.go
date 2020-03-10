@@ -59,7 +59,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			"d:\\Streams\\D1_1M_9330.ts",
 			"--sout", sout)
 		if err := w.cmd.Start(); err != nil {
-			comm.Error.Printf("run vlc failed\n")
+			comm.Error.Printf("run vlc failed")
 			return err
 		}
 	case CtlCmdStop:
@@ -80,7 +80,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 func (w *LocalEWorker) Encode() []Resource {
 
 	var sdp SDP = SDP{CodecVideo: VideoH264,
-		CodecAudio: AudioMPGA,
+		CodecAudio: AudioG711a,
 		PtVideo:    96,
 		PtAudio:    8,
 	}

@@ -46,7 +46,7 @@ func GetWorkerName(w Worker) string {
 		return n
 	}
 
-	comm.Error.Printf("worker implements CtlCmdName incorrectly\n")
+	comm.Error.Printf("worker implements CtlCmdName incorrectly")
 	return ""
 }
 
@@ -62,6 +62,6 @@ func SetWorkerRunning(w Worker, r bool) error {
 		}
 	}
 
-	comm.Error.Printf("worker implements CtlCmdStart/Stop incorrectly\n")
+	comm.Error.Printf("worker implements CtlCmdStart/Stop incorrectly")
 	return nil
 }

@@ -20,7 +20,6 @@ const (
 const (
 	AudioG711a = iota
 	AudioG711mu
-	AudioMPGA
 )
 
 // Resource is resource shared between path

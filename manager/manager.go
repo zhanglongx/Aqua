@@ -9,6 +9,8 @@ package manager
 
 import (
 	"errors"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/zhanglongx/Aqua/driver"
@@ -22,11 +24,8 @@ const (
 	STRRUN    = "IsRunning"
 )
 
-// pathID is the path's ID
-type pathID string
-
 // InValidPathID is ID of Invalidate
-const InValidPathID pathID = ""
+const InValidPathID string = ""
 
 // Workers store all workers registered by cards
 type Workers map[int][]driver.Worker
@@ -43,7 +42,8 @@ type Manager struct {
 }
 
 var (
-	errPathExists = errors.New("Path not exists")
+	errPathNotExists   = errors.New("Path not exists")
+	errWorkerNotExists = errors.New("Worker not exists")
 )
 
 // M is the instance of Manager
@@ -74,26 +74,46 @@ func (m *Manager) Start(DBFile string) error {
 }
 
 // Set processes data settings
-func (m *Manager) Set(path pathID, data map[string]string) error {
+func (m *Manager) Set(path string, data map[string]string) error {
 
 	m.lock.Lock()
 
 	defer m.lock.Unlock()
+
+	if isPathValid(path) != nil {
+		return errPathNotExists
+	}
+
+	worker, slot, wid := m.Workers.lookupWorker(data[STRWORKER])
+	if worker == nil {
+		return errWorkerNotExists
+	}
+
+	rowDB := &pathRow{
+		Slot:     slot,
+		WorkerID: wid,
+	}
+
+	m.DB.set(path, rowDB)
 
 	return nil
 }
 
 // Get queries data
-func (m *Manager) Get(path pathID) (map[string]string, error) {
+func (m *Manager) Get(path string) (map[string]string, error) {
 
 	m.lock.Lock()
 
 	defer m.lock.Unlock()
 
+	if isPathValid(path) != nil {
+		return nil, errPathNotExists
+	}
+
 	rowDB := m.DB.get(path)
 	if rowDB == nil {
 		// TODO: empty path?
-		return nil, errPathExists
+		return nil, errPathNotExists
 	}
 
 	data := make(map[string]string)
@@ -106,4 +126,38 @@ func (m *Manager) Get(path pathID) (map[string]string, error) {
 	data[STRRUN] = getPathRunning(rowDB)
 
 	return data, nil
+}
+
+func (w *Workers) lookupWorker(name string) (driver.Worker, int, int) {
+
+	var s, i int
+	for s = range *w {
+		for i = range (*w)[s] {
+			if name == driver.GetWorkerName((*w)[s][i]) {
+				return (*w)[s][i], s, i
+			}
+		}
+	}
+
+	return nil, s, i
+}
+
+func (w *Workers) newRES(r string) driver.Resource {
+	if strings.HasPrefix(strings.ToUpper(r), "rtsp://") {
+		return driver.OutterRes{Rtsp: r}
+	}
+
+	if _, ok := strconv.Atoi(r); ok != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func isPathValid(p string) error {
+	if _, err := strconv.Atoi(p); err != nil {
+		return err
+	}
+
+	return nil
 }
