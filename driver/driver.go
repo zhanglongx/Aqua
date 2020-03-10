@@ -19,6 +19,7 @@ const (
 	CtlCmdStart = iota
 	CtlCmdStop
 	CtlCmdName
+	CtlCmdIP
 )
 
 // CtlCmd is ID style type for control()
@@ -61,6 +62,16 @@ func GetWorkerName(w Worker) string {
 	return ""
 }
 
+// GetWorkerIP get Worker's IP
+func GetWorkerIP(w Worker) net.IP {
+	if ip, ok := w.Control(CtlCmdIP).(net.IP); ok {
+		return ip
+	}
+
+	comm.Error.Printf("worker implements CtlCmdIP incorrectly")
+	return net.IPv4(0, 0, 0, 0)
+}
+
 // SetWorkerRunning set Running status
 func SetWorkerRunning(w Worker, r bool) error {
 	if r {
@@ -100,6 +111,15 @@ func SetDecodeRes(w Worker, ir InnerRes) error {
 // IsWorkerDec return bool
 func IsWorkerDec(w Worker) bool {
 	if _, ok := w.(Decoder); ok {
+		return true
+	}
+
+	return false
+}
+
+// IsWorkerEnc return bool
+func IsWorkerEnc(w Worker) bool {
+	if _, ok := w.(Encoder); ok {
 		return true
 	}
 

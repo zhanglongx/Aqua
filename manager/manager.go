@@ -9,6 +9,8 @@ package manager
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
 	"strconv"
 	"sync"
 
@@ -102,9 +104,33 @@ func (m *Manager) Set(path string, data map[string]string) error {
 		}
 	}
 
+	if driver.IsWorkerEnc(worker) {
+		// TODO: rtsp
+	}
+
+	var isRunning bool
+	if isRunning {
+		isRunning = true
+	} else {
+		isRunning = false
+	}
+
+	driver.SetWorkerRunning(worker, isRunning)
+
+	// FIXME:
+	re := regexp.MustCompile(`^_\d`)
+	cardname := fmt.Sprintf("%q\n", re.Find([]byte(driver.GetWorkerName(worker))))
+
+	ip := driver.GetWorkerIP(worker)
+
 	rowDB := &pathRow{
-		Slot:     slot,
-		WorkerID: wid,
+		PathName:  data[STRPATH],
+		Slot:      slot,
+		WorkerID:  wid,
+		CardName:  cardname,
+		IP:        ip,
+		IsRunning: isRunning,
+		UpStream:  data[STRUPSTREAM],
 	}
 
 	m.DB.set(path, rowDB)

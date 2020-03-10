@@ -88,6 +88,9 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
 			w.Slot, w.WorkerID)
 
+	case CtlCmdIP:
+		return w.IP
+
 	default:
 	}
 	return nil
