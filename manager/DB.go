@@ -11,7 +11,6 @@ import (
 	"net"
 
 	"github.com/zhanglongx/Aqua/comm"
-	"github.com/zhanglongx/Aqua/driver"
 )
 
 // DBVER is DB File Version
@@ -37,8 +36,8 @@ type pathRow struct {
 	// path's status
 	IsRunning bool
 
-	// input resource
-	InRes []driver.Resource
+	// UpStream pathID
+	UpStream string
 }
 
 // DB contains all path' config. It's degsinged to be easily

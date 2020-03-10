@@ -32,6 +32,8 @@ type LocalEWorker struct {
 
 	IP net.IP
 
+	IsRunning bool
+
 	cmd *exec.Cmd
 }
 
@@ -55,6 +57,10 @@ func (l *LocalE) Close() error {
 func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	switch c {
 	case CtlCmdStart:
+		if w.IsRunning == true {
+			return nil
+		}
+
 		w.cmd = exec.Command(vlcExe,
 			"d:\\Streams\\D1_1M_9330.ts",
 			"--sout", sout)
@@ -62,22 +68,33 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			comm.Error.Printf("run vlc failed")
 			return err
 		}
+
+		w.IsRunning = true
+
 	case CtlCmdStop:
-		// wait close manually
+		if w.IsRunning == false {
+			return nil
+		}
+
+		fmt.Printf("Waiting for closing VLC manually")
 		if err := w.cmd.Wait(); err != nil {
 			comm.Error.Printf("vlc exit with error")
 			return err
 		}
+
+		w.IsRunning = false
+
 	case CtlCmdName:
 		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
 			w.Slot, w.WorkerID)
+
 	default:
 	}
 	return nil
 }
 
 // Encode method
-func (w *LocalEWorker) Encode() []Resource {
+func (w *LocalEWorker) Encode() InnerRes {
 
 	var sdp SDP = SDP{CodecVideo: VideoH264,
 		CodecAudio: AudioG711a,
@@ -85,5 +102,5 @@ func (w *LocalEWorker) Encode() []Resource {
 		PtAudio:    8,
 	}
 
-	return []Resource{InnerRes{IP: w.IP, Port: []int{1235}, SDP: sdp}}
+	return InnerRes{Port: []int{1235}, SDP: sdp}
 }

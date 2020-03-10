@@ -10,7 +10,6 @@ package manager
 import (
 	"errors"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/zhanglongx/Aqua/driver"
@@ -18,10 +17,10 @@ import (
 
 // STR defines for data
 const (
-	STRPATH   = "PathName"
-	STRWORKER = "Worker"
-	STRRES    = "Res"
-	STRRUN    = "IsRunning"
+	STRPATH     = "PathName"
+	STRWORKER   = "Worker"
+	STRUPSTREAM = "UpStream"
+	STRRUN      = "IsRunning"
 )
 
 // InValidPathID is ID of Invalidate
@@ -89,6 +88,20 @@ func (m *Manager) Set(path string, data map[string]string) error {
 		return errWorkerNotExists
 	}
 
+	if driver.IsWorkerDec(worker) {
+		ir, err := m.upstreamRes(data[STRUPSTREAM])
+		if err != nil {
+			return err
+		}
+
+		// TODO: rtsp
+
+		err = driver.SetDecodeRes(worker, ir)
+		if err != nil {
+			return err
+		}
+	}
+
 	rowDB := &pathRow{
 		Slot:     slot,
 		WorkerID: wid,
@@ -122,10 +135,30 @@ func (m *Manager) Get(path string) (map[string]string, error) {
 
 	data[STRPATH] = getPathName(rowDB)
 	data[STRWORKER] = driver.GetWorkerName(w)
-	// tempz RES
 	data[STRRUN] = getPathRunning(rowDB)
 
+	// TODO: rtsp
+
 	return data, nil
+}
+
+func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
+
+	if err := isPathValid(up); err != nil {
+		return driver.InnerRes{}, err
+	}
+
+	rowDB := m.DB.get(up)
+	if rowDB == nil {
+		return driver.InnerRes{}, errPathNotExists
+	}
+
+	upWorker := m.Workers[rowDB.Slot][rowDB.WorkerID]
+	if upWorker == nil {
+		return driver.InnerRes{}, errPathNotExists
+	}
+
+	return driver.GetEncodeRes(upWorker)
 }
 
 func (w *Workers) lookupWorker(name string) (driver.Worker, int, int) {
@@ -140,18 +173,6 @@ func (w *Workers) lookupWorker(name string) (driver.Worker, int, int) {
 	}
 
 	return nil, s, i
-}
-
-func (w *Workers) newRES(r string) driver.Resource {
-	if strings.HasPrefix(strings.ToUpper(r), "rtsp://") {
-		return driver.OutterRes{Rtsp: r}
-	}
-
-	if _, ok := strconv.Atoi(r); ok != nil {
-		return nil
-	}
-
-	return nil
 }
 
 func isPathValid(p string) error {

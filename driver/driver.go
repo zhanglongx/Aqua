@@ -8,6 +8,7 @@
 package driver
 
 import (
+	"errors"
 	"net"
 
 	"github.com/zhanglongx/Aqua/comm"
@@ -37,10 +38,20 @@ type Worker interface {
 // Encoder defines Encoder family operation
 type Encoder interface {
 	Worker
-	Encoder() Resource
+	Encoder() (InnerRes, error)
 }
 
-// GetWorkerName return Worker's Name
+// Decoder defines Decoder family operation
+type Decoder interface {
+	Worker
+	Decoder(InnerRes) error
+}
+
+var (
+	errBadImplement = errors.New("Bad Implement")
+)
+
+// GetWorkerName get Worker's Name
 func GetWorkerName(w Worker) string {
 	if n, ok := w.Control(CtlCmdName).(string); ok {
 		return n
@@ -64,4 +75,33 @@ func SetWorkerRunning(w Worker, r bool) error {
 
 	comm.Error.Printf("worker implements CtlCmdStart/Stop incorrectly")
 	return nil
+}
+
+// GetEncodeRes get Encoder's Res
+func GetEncodeRes(w Worker) (InnerRes, error) {
+	if w, ok := w.(Encoder); ok {
+		return w.Encoder()
+	}
+
+	comm.Error.Printf("worker implements Encoder incorrectly")
+	return InnerRes{}, errBadImplement
+}
+
+// SetDecodeRes set Res to Decode
+func SetDecodeRes(w Worker, ir InnerRes) error {
+	if w, ok := w.(Decoder); ok {
+		return w.Decoder(ir)
+	}
+
+	comm.Error.Printf("worker implements Decoder incorrectly")
+	return errBadImplement
+}
+
+// IsWorkerDec return bool
+func IsWorkerDec(w Worker) bool {
+	if _, ok := w.(Decoder); ok {
+		return true
+	}
+
+	return false
 }
