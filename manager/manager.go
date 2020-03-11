@@ -208,9 +208,5 @@ func checkParams(p *Params) error {
 		return errBadParams
 	}
 
-	if isPathValid(p.UpStream) != nil {
-		return errBadParams
-	}
-
 	return nil
 }

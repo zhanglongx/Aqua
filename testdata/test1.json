@@ -1,13 +1,11 @@
 {
     "Version" : "1.0.0",
-    "Config" : {
+    "Store" : {
         "0" : {
-            "Slot": 0,
-            "WorkerID": 0,
-            "Name": "local_encoder",
-            "IP": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 165, 53, 35],
+            "PathName": "local vlc",
+            "WorkerName": "local_encoder_0_0",
             "IsRunning": true,
-            "InRes": ["rtsp://192.165.53.35:1234"]
+            "UpStream": ""
         }
     }
 }

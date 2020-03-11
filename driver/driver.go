@@ -62,16 +62,6 @@ func GetWorkerName(w Worker) string {
 	return ""
 }
 
-// GetWorkerIP get Worker's IP
-func GetWorkerIP(w Worker) net.IP {
-	if ip, ok := w.Control(CtlCmdIP).(net.IP); ok {
-		return ip
-	}
-
-	comm.Error.Printf("worker implements CtlCmdIP incorrectly")
-	return net.IPv4(0, 0, 0, 0)
-}
-
 // SetWorkerRunning set Running status
 func SetWorkerRunning(w Worker, r bool) error {
 	if r {
@@ -124,4 +114,14 @@ func IsWorkerEnc(w Worker) bool {
 	}
 
 	return false
+}
+
+// helperTrsInPort
+func helperTrsInPort(s int, w int) int {
+	if (s < 0 || s > 16) || (w < 0 || w > 16) {
+		comm.Error.Fatal("slot port error")
+		return -1
+	}
+
+	return 8000 + 64*s + w
 }
