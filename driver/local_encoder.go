@@ -21,28 +21,36 @@ const sout = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44
 
 // LocalE is the main struct for sub-card
 type LocalE struct {
+	// Card Slot
+	Slot int
+
+	// Card IP
+	IP net.IP
 }
 
 // LocalEWorker is the main struct for sub-card's
 // Worker
 type LocalEWorker struct {
-	Slot int
-
 	WorkerID int
 
-	IP net.IP
-
 	IsRunning bool
+
+	card *LocalE
 
 	cmd *exec.Cmd
 }
 
 // Open method
 func (l *LocalE) Open(s int, IP net.IP) []Worker {
+	card := LocalE{
+		Slot: s,
+		IP:   IP,
+	}
+
 	var w *LocalEWorker = &LocalEWorker{
-		Slot:     s,
 		WorkerID: 0,
-		IP:       IP,
+
+		card: &card,
 	}
 
 	return []Worker{w}
@@ -86,10 +94,10 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 
 	case CtlCmdName:
 		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
-			w.Slot, w.WorkerID)
+			w.card.Slot, w.WorkerID)
 
 	case CtlCmdIP:
-		return w.IP
+		return w.card.IP
 
 	default:
 	}
