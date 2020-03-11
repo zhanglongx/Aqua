@@ -151,9 +151,9 @@ func (m *Manager) Set(path string, params *Params) error {
 // Get queries data
 func (m *Manager) Get(path string) (Params, error) {
 
-	m.lock.Lock()
+	m.lock.RLock()
 
-	defer m.lock.Unlock()
+	defer m.lock.RUnlock()
 
 	if isPathValid(path) != nil {
 		return Params{}, errPathNotExists
