@@ -81,10 +81,12 @@ func (m *Manager) Start(DBFile string) error {
 
 	for path, params := range m.DB.Store {
 		if err := m.Set(path, params); err != nil {
-			// TODO: improve
-
 			comm.Error.Printf("appling saved params failed")
-			m.DB.Store = make(map[string]*Params)
+
+			// TODO: improve
+			if err := m.DB.clearDB(); err != nil {
+				return err
+			}
 			break
 		}
 	}
@@ -112,7 +114,7 @@ func (m *Manager) Set(path string, params *Params) error {
 		return errWorkerNotExists
 	}
 
-	if m.isWorkerAlloc(w) != path {
+	if inUse := m.isWorkerAlloc(w); inUse != "" && inUse != path {
 		return errWorkerInUse
 	}
 
@@ -139,8 +141,9 @@ func (m *Manager) Set(path string, params *Params) error {
 	}
 
 	dupParams := *params
-	m.DB.set(path, &dupParams)
-	m.DB.saveToFile()
+	if err := m.DB.set(path, &dupParams); err != nil {
+		return err
+	}
 
 	return nil
 }

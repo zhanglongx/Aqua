@@ -50,7 +50,9 @@ func (d *DB) loadFromFile(JFile string) error {
 	if d.Version != DBVER {
 		comm.Error.Printf("DB file ver error: %s", d.Version)
 		comm.Error.Printf("Discarding old file: %s", JFile)
-		d.Store = make(map[string]*Params, 0)
+		if err := d.clearDB(); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -62,7 +64,7 @@ func (d *DB) loadFromFile(JFile string) error {
 // saveToFile save JSON file to Cfg
 func (d *DB) saveToFile() error {
 
-	buf, err := json.Marshal(d)
+	buf, err := json.MarshalIndent(d, "", "    ")
 	if err != nil {
 		comm.Error.Printf("Encode DB %s failed", d.jFile)
 		return err
@@ -77,6 +79,12 @@ func (d *DB) saveToFile() error {
 	return nil
 }
 
+// clearDB clear DB
+func (d *DB) clearDB() error {
+	d.Store = make(map[string]*Params, 0)
+	return d.saveToFile()
+}
+
 // set set a new pathRow in DB, DB store *ONLY* the pointer
 // passed in, so make sure passing a whole new pathRow{}
 // everytime
@@ -84,7 +92,7 @@ func (d *DB) set(ID string, p *Params) error {
 
 	d.Store[ID] = p
 
-	return nil
+	return d.saveToFile()
 }
 
 // get return a *pathRow in DB. Because set() and get() are
