@@ -17,7 +17,7 @@ import (
 const LocalEncoderName string = "local_encoder"
 
 const vlcExe = "c:\\Program Files\\VideoLAN\\VLC\\vlc.exe"
-const sout = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{sdp=rtsp://:8554/test}"
+const sout = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{sdp=rtsp://:1235/test}"
 
 // LocalE is the main struct for sub-card
 type LocalE struct {
@@ -41,7 +41,7 @@ type LocalEWorker struct {
 }
 
 // Open method
-func (l *LocalE) Open(s int, IP net.IP) []Worker {
+func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
 	card := LocalE{
 		Slot: s,
 		IP:   IP,
@@ -53,7 +53,7 @@ func (l *LocalE) Open(s int, IP net.IP) []Worker {
 		card: &card,
 	}
 
-	return []Worker{w}
+	return []Worker{w}, nil
 }
 
 // Close method
@@ -108,7 +108,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 func (w *LocalEWorker) Encode() InnerRes {
 
 	var sdp SDP = SDP{CodecVideo: VideoH264,
-		CodecAudio: AudioG711a,
+		CodecAudio: AudioMPGA,
 		PtVideo:    96,
 		PtAudio:    8,
 	}

@@ -80,8 +80,11 @@ func (m *Manager) Start(DBFile string) error {
 
 	for path, params := range m.DB.Store {
 		if err := m.Set(path, params); err != nil {
-			comm.Error.Printf("loading path: %s params from file failed", path)
-			// tempz
+			// TODO: improve
+
+			comm.Error.Printf("appling saved params failed")
+			m.DB.Store = make(map[string]*Params)
+			break
 		}
 	}
 

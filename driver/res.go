@@ -15,6 +15,7 @@ const (
 const (
 	AudioG711a = iota
 	AudioG711mu
+	AudioMPGA
 )
 
 // SDP shared between path
@@ -28,9 +29,6 @@ type SDP struct {
 
 // InnerRes is resource shared between inner ports
 type InnerRes struct {
-
-	// SvrAddr is the transmit service
-	SvrAddr string
 
 	// Port is the resource port
 	Port []int

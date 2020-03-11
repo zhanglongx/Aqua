@@ -55,7 +55,7 @@ type DummyWorker struct {
 // to sub-card, and perform necessary communication with
 // it, as querying the hardware version or working path
 // in sub-card
-func (d *Dummy) Open(s int, IP net.IP) []Worker {
+func (d *Dummy) Open(s int, IP net.IP) ([]Worker, error) {
 	var w *DummyWorker = &DummyWorker{
 		Slot:     s,
 		WorkerID: 0,
@@ -63,7 +63,7 @@ func (d *Dummy) Open(s int, IP net.IP) []Worker {
 	}
 
 	comm.Info.Printf("Open %s successfully", DummyName)
-	return []Worker{w}
+	return []Worker{w}, nil
 }
 
 // Close sub-card, do un-initialization. a close of

@@ -27,7 +27,7 @@ type CtlCmd int
 
 // Card defines sub-cards
 type Card interface {
-	Open(s int, IP net.IP) []Worker
+	Open(s int, IP net.IP) ([]Worker, error)
 	Close() error
 }
 

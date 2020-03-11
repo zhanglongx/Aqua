@@ -46,7 +46,9 @@ func (r *reg) Register() (Workers, error) {
 			continue
 		}
 
-		workers[found.slot] = card.Open(found.slot, found.ip)
+		if w, err := card.Open(found.slot, found.ip); err == nil {
+			workers[found.slot] = w
+		}
 	}
 
 	return workers, retErr
