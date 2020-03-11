@@ -9,7 +9,6 @@ package manager
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"sync"
@@ -28,6 +27,22 @@ const (
 // InValidPathID is ID of Invalidate
 const InValidPathID string = ""
 
+// Params is the main struct used to set and
+// get path setttings
+type Params struct {
+	// Path Name
+	PathName string
+
+	// Worker name
+	WorkerName string
+
+	// path's status
+	IsRunning bool
+
+	// UpStream pathID
+	UpStream string
+}
+
 // Workers store all workers registered by cards
 type Workers map[int][]driver.Worker
 
@@ -43,6 +58,7 @@ type Manager struct {
 }
 
 var (
+	errBadParams       = errors.New("Params parse error")
 	errPathNotExists   = errors.New("Path not exists")
 	errWorkerNotExists = errors.New("Worker not exists")
 )
@@ -75,7 +91,7 @@ func (m *Manager) Start(DBFile string) error {
 }
 
 // Set processes data settings
-func (m *Manager) Set(path string, data map[string]string) error {
+func (m *Manager) Set(path string, params *Params) error {
 
 	m.lock.Lock()
 
@@ -85,125 +101,114 @@ func (m *Manager) Set(path string, data map[string]string) error {
 		return errPathNotExists
 	}
 
-	worker, slot, wid := m.Workers.lookupWorker(data[STRWORKER])
-	if worker == nil {
+	if err := checkParams(params); err != nil {
+		return err
+	}
+
+	w := m.Workers.lookupWorker(params.WorkerName)
+	if w == nil {
 		return errWorkerNotExists
 	}
 
-	if driver.IsWorkerDec(worker) {
-		ir, err := m.upstreamRes(data[STRUPSTREAM])
+	if driver.IsWorkerDec(w) {
+		ir, err := m.upstreamRes(params.UpStream)
 		if err != nil {
 			return err
 		}
 
 		// TODO: rtsp
 
-		err = driver.SetDecodeRes(worker, ir)
+		err = driver.SetDecodeRes(w, ir)
 		if err != nil {
 			return err
 		}
 	}
 
-	if driver.IsWorkerEnc(worker) {
+	if driver.IsWorkerEnc(w) {
 		// TODO: rtsp
 	}
 
-	var isRunning bool
-	if isRunning {
-		isRunning = true
-	} else {
-		isRunning = false
-	}
+	driver.SetWorkerRunning(w, params.IsRunning)
 
-	driver.SetWorkerRunning(worker, isRunning)
-
-	// FIXME:
-	re := regexp.MustCompile(`^_\d`)
-	cardname := fmt.Sprintf("%q\n", re.Find([]byte(driver.GetWorkerName(worker))))
-
-	ip := driver.GetWorkerIP(worker)
-
-	rowDB := &pathRow{
-		PathName:  data[STRPATH],
-		Slot:      slot,
-		WorkerID:  wid,
-		CardName:  cardname,
-		IP:        ip,
-		IsRunning: isRunning,
-		UpStream:  data[STRUPSTREAM],
-	}
-
-	m.DB.set(path, rowDB)
+	dupParams := *params
+	m.DB.set(path, &dupParams)
 
 	return nil
 }
 
 // Get queries data
-func (m *Manager) Get(path string) (map[string]string, error) {
+func (m *Manager) Get(path string) (Params, error) {
 
 	m.lock.Lock()
 
 	defer m.lock.Unlock()
 
 	if isPathValid(path) != nil {
-		return nil, errPathNotExists
+		return Params{}, errPathNotExists
 	}
 
-	rowDB := m.DB.get(path)
-	if rowDB == nil {
+	saved := m.DB.get(path)
+	if saved == nil {
 		// TODO: empty path?
-		return nil, errPathNotExists
+		return Params{}, errPathNotExists
 	}
 
-	data := make(map[string]string)
-
-	w := m.Workers[rowDB.Slot][rowDB.WorkerID]
-
-	data[STRPATH] = getPathName(rowDB)
-	data[STRWORKER] = driver.GetWorkerName(w)
-	data[STRRUN] = getPathRunning(rowDB)
-
-	// TODO: rtsp
-
-	return data, nil
+	return *saved, nil
 }
 
 func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
 
-	if err := isPathValid(up); err != nil {
-		return driver.InnerRes{}, err
-	}
-
-	rowDB := m.DB.get(up)
-	if rowDB == nil {
+	if isPathValid(up) != nil {
 		return driver.InnerRes{}, errPathNotExists
 	}
 
-	upWorker := m.Workers[rowDB.Slot][rowDB.WorkerID]
+	saved := m.DB.get(up)
+	if saved == nil {
+		return driver.InnerRes{}, errPathNotExists
+	}
+
+	upWorker := m.Workers.lookupWorker(saved.WorkerName)
 	if upWorker == nil {
-		return driver.InnerRes{}, errPathNotExists
+		return driver.InnerRes{}, errWorkerNotExists
 	}
 
 	return driver.GetEncodeRes(upWorker)
 }
 
-func (w *Workers) lookupWorker(name string) (driver.Worker, int, int) {
+func (w *Workers) lookupWorker(name string) driver.Worker {
 
 	var s, i int
 	for s = range *w {
 		for i = range (*w)[s] {
 			if name == driver.GetWorkerName((*w)[s][i]) {
-				return (*w)[s][i], s, i
+				return (*w)[s][i]
 			}
 		}
 	}
 
-	return nil, s, i
+	return nil
 }
 
 func isPathValid(p string) error {
 	if _, err := strconv.Atoi(p); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// checkParams only do basic literal check, and leaves legal
+// checking alone
+func checkParams(p *Params) error {
+
+	// TODO: unicode
+	matched, err := regexp.Match(`\S+_\d+_\d+`, []byte(p.WorkerName))
+	if !matched || err != nil {
+		return errBadParams
+	}
+
+	if isPathValid(p.UpStream) != nil {
+		return errBadParams
 	}
 
 	return nil
