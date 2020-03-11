@@ -51,6 +51,7 @@ var (
 	errBadParams       = errors.New("Params parse error")
 	errPathNotExists   = errors.New("Path not exists")
 	errWorkerNotExists = errors.New("Worker not exists")
+	errWorkerInUse     = errors.New("Worker In Use")
 )
 
 // M is the instance of Manager
@@ -106,9 +107,13 @@ func (m *Manager) Set(path string, params *Params) error {
 		return err
 	}
 
-	w := m.Workers.lookupWorker(params.WorkerName)
+	w := m.Workers.findWorker(params.WorkerName)
 	if w == nil {
 		return errWorkerNotExists
+	}
+
+	if m.isWorkerAlloc(w) != path {
+		return errWorkerInUse
 	}
 
 	if driver.IsWorkerDec(w) {
@@ -129,10 +134,13 @@ func (m *Manager) Set(path string, params *Params) error {
 		// TODO: rtsp
 	}
 
-	driver.SetWorkerRunning(w, params.IsRunning)
+	if err := driver.SetWorkerRunning(w, params.IsRunning); err != nil {
+		return err
+	}
 
 	dupParams := *params
 	m.DB.set(path, &dupParams)
+	m.DB.saveToFile()
 
 	return nil
 }
@@ -168,7 +176,7 @@ func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
 		return driver.InnerRes{}, errPathNotExists
 	}
 
-	upWorker := m.Workers.lookupWorker(saved.WorkerName)
+	upWorker := m.Workers.findWorker(saved.WorkerName)
 	if upWorker == nil {
 		return driver.InnerRes{}, errWorkerNotExists
 	}
@@ -176,7 +184,18 @@ func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
 	return driver.GetEncodeRes(upWorker)
 }
 
-func (w *Workers) lookupWorker(name string) driver.Worker {
+func (m *Manager) isWorkerAlloc(w driver.Worker) string {
+
+	for path, params := range m.DB.Store {
+		if params.WorkerName == driver.GetWorkerName(w) {
+			return path
+		}
+	}
+
+	return ""
+}
+
+func (w *Workers) findWorker(name string) driver.Worker {
 
 	var s, i int
 	for s = range *w {

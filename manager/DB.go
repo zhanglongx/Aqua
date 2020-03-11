@@ -22,6 +22,8 @@ const DBVER string = "1.0.0"
 // get() will not get rewritten, data from pathRow should be
 // copied before any unlock method.
 type DB struct {
+	jFile string
+
 	// Version should be used to check DB's compatibility
 	Version string
 
@@ -52,21 +54,23 @@ func (d *DB) loadFromFile(JFile string) error {
 		return nil
 	}
 
+	d.jFile = JFile
+
 	return nil
 }
 
 // saveToFile save JSON file to Cfg
-func (d *DB) saveToFile(JFile string) error {
+func (d *DB) saveToFile() error {
 
 	buf, err := json.Marshal(d)
 	if err != nil {
-		comm.Error.Printf("Encode DB %s failed", JFile)
+		comm.Error.Printf("Encode DB %s failed", d.jFile)
 		return err
 	}
 
-	err = ioutil.WriteFile(JFile, buf, 0644)
+	err = ioutil.WriteFile(d.jFile, buf, 0644)
 	if err != nil {
-		comm.Error.Printf("Write DB file %s failed", JFile)
+		comm.Error.Printf("Write DB file %s failed", d.jFile)
 		return err
 	}
 

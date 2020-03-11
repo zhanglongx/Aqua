@@ -31,9 +31,9 @@ type LocalE struct {
 // LocalEWorker is the main struct for sub-card's
 // Worker
 type LocalEWorker struct {
-	WorkerID int
+	workerID int
 
-	IsRunning bool
+	isRunning bool
 
 	card *LocalE
 
@@ -50,7 +50,7 @@ func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
 	}
 
 	var w *LocalEWorker = &LocalEWorker{
-		WorkerID: 0,
+		workerID: 0,
 
 		card: &card,
 	}
@@ -70,7 +70,7 @@ func (l *LocalE) Close() error {
 func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	switch c {
 	case CtlCmdStart:
-		if w.IsRunning == true {
+		if w.isRunning == true {
 			return nil
 		}
 
@@ -84,10 +84,10 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			return err
 		}
 
-		w.IsRunning = true
+		w.isRunning = true
 
 	case CtlCmdStop:
-		if w.IsRunning == false {
+		if w.isRunning == false {
 			return nil
 		}
 
@@ -97,11 +97,11 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			return err
 		}
 
-		w.IsRunning = false
+		w.isRunning = false
 
 	case CtlCmdName:
 		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
-			w.card.Slot, w.WorkerID)
+			w.card.Slot, w.workerID)
 
 	case CtlCmdIP:
 		return w.card.IP
