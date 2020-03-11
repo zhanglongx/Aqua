@@ -17,7 +17,7 @@ import (
 const LocalEncoderName string = "local_encoder"
 
 const vlcExe = "c:\\Program Files\\VideoLAN\\VLC\\vlc.exe"
-const soutTpl = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=localhost,port%d}"
+const soutTpl = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=localhost,port=%d}"
 
 // LocalE is the main struct for sub-card
 type LocalE struct {

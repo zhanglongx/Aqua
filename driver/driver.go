@@ -74,7 +74,6 @@ func SetWorkerRunning(w Worker, r bool) error {
 		}
 	}
 
-	comm.Error.Printf("worker implements CtlCmdStart/Stop incorrectly")
 	return nil
 }
 
