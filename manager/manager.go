@@ -13,19 +13,9 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/driver"
 )
-
-// STR defines for data
-const (
-	STRPATH     = "PathName"
-	STRWORKER   = "Worker"
-	STRUPSTREAM = "UpStream"
-	STRRUN      = "IsRunning"
-)
-
-// InValidPathID is ID of Invalidate
-const InValidPathID string = ""
 
 // Params is the main struct used to set and
 // get path setttings
@@ -76,15 +66,23 @@ func Init() {
 	R = reg{}
 }
 
-// Start deals with initialization
+// Start does registing, and loads cfg from file
 func (m *Manager) Start(DBFile string) error {
-	if err := m.DB.loadFromFile(DBFile); err != nil {
-		return errors.New("load from file failed")
-	}
 
 	var err error
 	if m.Workers, err = R.Register(); err != nil {
-		return errors.New("register failed")
+		return err
+	}
+
+	if err := m.DB.loadFromFile(DBFile); err != nil {
+		return err
+	}
+
+	for path, params := range m.DB.Store {
+		if err := m.Set(path, params); err != nil {
+			comm.Error.Printf("loading path: %s params from file failed", path)
+			// tempz
+		}
 	}
 
 	return nil
