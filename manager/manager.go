@@ -33,9 +33,6 @@ type Params struct {
 	UpStream string
 }
 
-// Workers store all workers registered by cards
-type Workers map[int][]driver.Worker
-
 // Manager is main struct for mananger operation
 type Manager struct {
 	lock sync.RWMutex
@@ -57,21 +54,16 @@ var (
 // M is the instance of Manager
 var M Manager
 
-// R is the instance of reg
-var R reg
-
 // Init create M and R
 func Init() {
 	M = Manager{}
-
-	R = reg{}
 }
 
 // Start does registing, and loads cfg from file
 func (m *Manager) Start(DBFile string) error {
 
-	var err error
-	if m.Workers, err = R.Register(); err != nil {
+	m.Workers = Workers{}
+	if err := m.Workers.register(); err != nil {
 		return err
 	}
 
@@ -168,6 +160,18 @@ func (m *Manager) Get(path string) (Params, error) {
 	return *saved, nil
 }
 
+func (m *Manager) unAllocedWorkers() []string {
+
+	var unUsed []string
+	for _, w := range m.Workers {
+		if m.isWorkerAlloc(w) == "" {
+			unUsed = append(unUsed, driver.GetWorkerName(w))
+		}
+	}
+
+	return unUsed
+}
+
 func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
 
 	if isPathValid(up) != nil {
@@ -196,20 +200,6 @@ func (m *Manager) isWorkerAlloc(w driver.Worker) string {
 	}
 
 	return ""
-}
-
-func (w *Workers) findWorker(name string) driver.Worker {
-
-	var s, i int
-	for s = range *w {
-		for i = range (*w)[s] {
-			if name == driver.GetWorkerName((*w)[s][i]) {
-				return (*w)[s][i]
-			}
-		}
-	}
-
-	return nil
 }
 
 func isPathValid(p string) error {
