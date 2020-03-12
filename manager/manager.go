@@ -119,7 +119,7 @@ func (m *Manager) Set(path string, params *Params) error {
 
 		// TODO: rtsp
 
-		err = driver.SetDecodeRes(w, ir)
+		err = driver.SetDecodePipe(w, ir)
 		if err != nil {
 			return err
 		}
@@ -173,23 +173,26 @@ func (m *Manager) unAllocedWorkers() []string {
 	return unUsed
 }
 
-func (m *Manager) upstreamRes(up string) (driver.InnerRes, error) {
+func (m *Manager) upstreamRes(up string) (driver.Pipe, error) {
 
-	if isPathValid(up) != nil {
-		return driver.InnerRes{}, errPathNotExists
-	}
+	// tempz
+	// if isPathValid(up) != nil {
+	// 	return driver.Pipe{}, errPathNotExists
+	// }
 
-	saved := m.DB.get(up)
-	if saved == nil {
-		return driver.InnerRes{}, errPathNotExists
-	}
+	// saved := m.DB.get(up)
+	// if saved == nil {
+	// 	return driver.Pipe{}, errPathNotExists
+	// }
 
-	upWorker := m.Workers.findWorker(saved.WorkerName)
-	if upWorker == nil {
-		return driver.InnerRes{}, errWorkerNotExists
-	}
+	// upWorker := m.Workers.findWorker(saved.WorkerName)
+	// if upWorker == nil {
+	// 	return driver.Pipe{}, errWorkerNotExists
+	// }
 
-	return driver.GetEncodeRes(upWorker)
+	// return driver.SetEncodeRes(upWorker)
+
+	return driver.Pipe{}, nil
 }
 
 func (m *Manager) isWorkerAlloc(w driver.Worker) string {

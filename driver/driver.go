@@ -20,6 +20,8 @@ const (
 	CtlCmdStop
 	CtlCmdName
 	CtlCmdIP
+	CtlCmdSlot
+	CtlCmdWorkerID
 )
 
 // CtlCmd is ID style type for control()
@@ -39,13 +41,13 @@ type Worker interface {
 // Encoder defines Encoder family operation
 type Encoder interface {
 	Worker
-	Encoder() (InnerRes, error)
+	Encoder(Pipe) error
 }
 
 // Decoder defines Decoder family operation
 type Decoder interface {
 	Worker
-	Decoder(InnerRes) error
+	Decoder(Pipe) error
 }
 
 var (
@@ -58,8 +60,28 @@ func GetWorkerName(w Worker) string {
 		return n
 	}
 
-	comm.Error.Printf("worker implements CtlCmdName incorrectly")
+	comm.Error.Printf("Worker implements CtlCmdName incorrectly")
 	return ""
+}
+
+// GetWorkerSlot get Worker's Slot
+func GetWorkerSlot(w Worker) int {
+	if s, ok := w.Control(CtlCmdSlot).(int); ok {
+		return s
+	}
+
+	comm.Error.Printf("Worker implements CtlCmdSlot incorrectly")
+	return -1
+}
+
+// GetWorkerWorkerID get Worker's Slot
+func GetWorkerWorkerID(w Worker) int {
+	if s, ok := w.Control(CtlCmdWorkerID).(int); ok {
+		return s
+	}
+
+	comm.Error.Printf("Worker implements CtlCmdWorkerID incorrectly")
+	return -1
 }
 
 // SetWorkerRunning set Running status
@@ -77,23 +99,23 @@ func SetWorkerRunning(w Worker, r bool) error {
 	return nil
 }
 
-// GetEncodeRes get Encoder's Res
-func GetEncodeRes(w Worker) (InnerRes, error) {
+// SetEncodePipe set Pipe for Encoder
+func SetEncodePipe(w Worker, pi Pipe) error {
 	if w, ok := w.(Encoder); ok {
-		return w.Encoder()
+		return w.Encoder(pi)
 	}
 
-	comm.Error.Printf("worker implements Encoder incorrectly")
-	return InnerRes{}, errBadImplement
+	comm.Error.Printf("Worker implements Encoder incorrectly")
+	return errBadImplement
 }
 
-// SetDecodeRes set Res to Decode
-func SetDecodeRes(w Worker, ir InnerRes) error {
+// SetDecodePipe set Pipe for Decode
+func SetDecodePipe(w Worker, pi Pipe) error {
 	if w, ok := w.(Decoder); ok {
-		return w.Decoder(ir)
+		return w.Decoder(pi)
 	}
 
-	comm.Error.Printf("worker implements Decoder incorrectly")
+	comm.Error.Printf("Worker implements Decoder incorrectly")
 	return errBadImplement
 }
 
@@ -113,14 +135,4 @@ func IsWorkerEnc(w Worker) bool {
 	}
 
 	return false
-}
-
-// helperTrsInPort
-func helperTrsInPort(s int, w int) int {
-	if (s < 0 || s > 16) || (w < 0 || w > 16) {
-		comm.Error.Fatal("slot port error")
-		return -1
-	}
-
-	return 8000 + 64*s + w
 }

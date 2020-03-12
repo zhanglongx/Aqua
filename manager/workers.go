@@ -52,7 +52,7 @@ func (ws *Workers) register() error {
 			found.name, found.slot, found.ip)
 
 		if alloced[found.slot] == true {
-			comm.Error.Print("Slot already registered")
+			comm.Error.Printf("Slot %d already registered", found.slot)
 			continue
 		}
 

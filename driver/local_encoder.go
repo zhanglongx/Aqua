@@ -55,9 +55,6 @@ func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
 		card: &card,
 	}
 
-	w.port = append(w.port, helperTrsInPort(s, 0))
-	w.port = append(w.port, helperTrsInPort(s, 0)+2)
-
 	return []Worker{w}, nil
 }
 
@@ -106,19 +103,20 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	case CtlCmdIP:
 		return w.card.IP
 
+	case CtlCmdSlot:
+		return w.card.Slot
+
+	case CtlCmdWorkerID:
+		return w.workerID
+
 	default:
 	}
 	return nil
 }
 
 // Encode method
-func (w *LocalEWorker) Encode() InnerRes {
+func (w *LocalEWorker) Encode(pi Pipe) error {
 
-	var sdp SDP = SDP{CodecVideo: VideoH264,
-		CodecAudio: AudioMPGA,
-		PtVideo:    96,
-		PtAudio:    8,
-	}
-
-	return InnerRes{Port: w.port, SDP: sdp}
+	copy(w.port, pi.InPort)
+	return nil
 }
