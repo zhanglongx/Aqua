@@ -5,7 +5,10 @@
 
 package driver
 
-import "errors"
+import (
+	"errors"
+	"net"
+)
 
 // Video Codec
 const (
@@ -40,6 +43,9 @@ type Pipe struct {
 	// uses this as recvfrom port
 	OutPort []int
 
+	// OutIp is the data downstream IP
+	OutIP net.IP
+
 	// SDP
 	SDP SDP
 }
@@ -49,30 +55,20 @@ var (
 )
 
 // allocIn allocs InPort for a Pipe
-func (pi *Pipe) allocIn(w Worker) error {
+func (pi *Pipe) allocIn(w Worker) {
 	s := GetWorkerSlot(w)
 	id := GetWorkerWorkerID(w)
 
-	if s == -1 || id == -1 {
-		return errAllocPipeF
-	}
-
 	pi.InPort[0] = 8000 + 64*s + id
 	pi.InPort[0] = pi.InPort[0] + 1
-
-	return nil
 }
 
 // allocOut allocs OutPort for a Pipe
-func (pi *Pipe) allocOut(w Worker) error {
+func (pi *Pipe) allocOut(w Worker) {
 	id := GetWorkerWorkerID(w)
-
-	if id == -1 {
-		return errAllocPipeF
-	}
 
 	pi.InPort[0] = 8000 + id
 	pi.InPort[0] = pi.InPort[0] + 1
 
-	return nil
+	pi.OutIP = GetWorkerWorkerIP(w)
 }

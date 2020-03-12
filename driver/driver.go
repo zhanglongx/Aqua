@@ -60,7 +60,7 @@ func GetWorkerName(w Worker) string {
 		return n
 	}
 
-	comm.Error.Printf("Worker implements CtlCmdName incorrectly")
+	comm.Error.Fatalf("Worker implements CtlCmdName incorrectly")
 	return ""
 }
 
@@ -70,8 +70,8 @@ func GetWorkerSlot(w Worker) int {
 		return s
 	}
 
-	comm.Error.Printf("Worker implements CtlCmdSlot incorrectly")
-	return -1
+	comm.Error.Fatalf("Worker implements CtlCmdSlot incorrectly")
+	return 0
 }
 
 // GetWorkerWorkerID get Worker's Slot
@@ -80,8 +80,18 @@ func GetWorkerWorkerID(w Worker) int {
 		return s
 	}
 
-	comm.Error.Printf("Worker implements CtlCmdWorkerID incorrectly")
-	return -1
+	comm.Error.Fatalf("Worker implements CtlCmdWorkerID incorrectly")
+	return 0
+}
+
+// GetWorkerWorkerIP get Worker's Slot
+func GetWorkerWorkerIP(w Worker) net.IP {
+	if IP, ok := w.Control(CtlCmdIP).(net.IP); ok {
+		return IP
+	}
+
+	comm.Error.Fatalf("Worker implements CtlCmdWorkerIP incorrectly")
+	return net.IPv4(0, 0, 0, 0)
 }
 
 // SetWorkerRunning set Running status
@@ -105,7 +115,7 @@ func SetEncodePipe(w Worker, pi Pipe) error {
 		return w.Encoder(pi)
 	}
 
-	comm.Error.Printf("Worker implements Encoder incorrectly")
+	comm.Error.Fatalf("Worker implements Encoder incorrectly")
 	return errBadImplement
 }
 
@@ -115,7 +125,7 @@ func SetDecodePipe(w Worker, pi Pipe) error {
 		return w.Decoder(pi)
 	}
 
-	comm.Error.Printf("Worker implements Decoder incorrectly")
+	comm.Error.Fatalf("Worker implements Decoder incorrectly")
 	return errBadImplement
 }
 
