@@ -6,6 +6,7 @@
 package manager
 
 import (
+	"errors"
 	"net"
 
 	"github.com/zhanglongx/Aqua/comm"
@@ -15,9 +16,6 @@ import (
 // Workers store all workers registered by cards
 type Workers []driver.Worker
 
-type reg struct {
-}
-
 type regInfo struct {
 	slot int
 
@@ -25,6 +23,10 @@ type regInfo struct {
 
 	ip net.IP
 }
+
+var (
+	errNoCardFound = errors.New("no cards found")
+)
 
 // register accept sub-card's register
 func (ws *Workers) register() error {
@@ -36,21 +38,21 @@ func (ws *Workers) register() error {
 
 	alloced := make(map[int]bool)
 
-	// TODO: prevent re-register
 	for _, found := range cards {
 		var card driver.Card
 		switch found.name {
-		case "local_encoder":
+		case driver.LocalEncoderName:
 			card = &driver.LocalE{}
-			comm.Info.Printf("registering card %s in slot %d %v",
-				found.name, found.slot, found.ip)
 		default:
-			comm.Error.Printf("unknown card type %s", found.name)
+			comm.Error.Printf("Unknown card type %s", found.name)
 			continue
 		}
 
+		comm.Info.Printf("Registering card %s in slot %d %v",
+			found.name, found.slot, found.ip)
+
 		if alloced[found.slot] == true {
-			comm.Error.Print("slot already registered")
+			comm.Error.Print("Slot already registered")
 			continue
 		}
 
@@ -58,8 +60,12 @@ func (ws *Workers) register() error {
 			*ws = append(*ws, w...)
 			alloced[found.slot] = true
 		} else {
-			comm.Error.Printf("open card %s failed", found.name)
+			comm.Error.Printf("Open card %s failed", found.name)
 		}
+	}
+
+	if len(alloced) == 0 {
+		return errNoCardFound
 	}
 
 	return nil

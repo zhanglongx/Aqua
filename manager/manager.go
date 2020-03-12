@@ -73,7 +73,8 @@ func (m *Manager) Start(DBFile string) error {
 
 	for path, params := range m.DB.Store {
 		if err := m.Set(path, params); err != nil {
-			comm.Error.Printf("appling saved params failed")
+			comm.Error.Printf("Appling saved params in path %s failed",
+				path)
 
 			// TODO: improve
 			if err := m.DB.clearDB(); err != nil {
