@@ -53,10 +53,12 @@ func (ws *Workers) register() error {
 			comm.Error.Print("slot already registered")
 			continue
 		}
-		alloced[found.slot] = true
 
 		if w, err := card.Open(found.slot, found.ip); err == nil {
 			*ws = append(*ws, w...)
+			alloced[found.slot] = true
+		} else {
+			comm.Error.Printf("open card %s failed", found.name)
 		}
 	}
 
