@@ -115,8 +115,8 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 }
 
 // Encode method
-func (w *LocalEWorker) Encode(pi Pipe) error {
+func (w *LocalEWorker) Encode(pi Session) error {
 
-	copy(w.port, pi.InPort)
+	copy(w.port, pi.Ports)
 	return nil
 }

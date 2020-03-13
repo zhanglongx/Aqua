@@ -41,13 +41,13 @@ type Worker interface {
 // Encoder defines Encoder family operation
 type Encoder interface {
 	Worker
-	Encoder(Pipe) error
+	Encoder(*Session) error
 }
 
 // Decoder defines Decoder family operation
 type Decoder interface {
 	Worker
-	Decoder(Pipe) error
+	Decoder(*Session) error
 }
 
 var (
@@ -110,7 +110,7 @@ func SetWorkerRunning(w Worker, r bool) error {
 }
 
 // SetEncodePipe set Pipe for Encoder
-func SetEncodePipe(w Worker, pi Pipe) error {
+func SetEncodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Encoder); ok {
 		return w.Encoder(pi)
 	}
@@ -120,7 +120,7 @@ func SetEncodePipe(w Worker, pi Pipe) error {
 }
 
 // SetDecodePipe set Pipe for Decode
-func SetDecodePipe(w Worker, pi Pipe) error {
+func SetDecodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Decoder); ok {
 		return w.Decoder(pi)
 	}
