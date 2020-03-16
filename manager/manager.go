@@ -9,6 +9,7 @@ package manager
 
 import (
 	"errors"
+	"net"
 	"regexp"
 	"strconv"
 	"sync"
@@ -31,17 +32,26 @@ type Params struct {
 
 	// UpStream pathID
 	UpStream string
+
+	// Rtsp in
+	RtspIn string
+
+	// Rtsp out
+	RtspOut string
 }
 
 // Manager is main struct for mananger operation
 type Manager struct {
 	lock sync.RWMutex
 
-	// DB store config settings
-	DB DB
+	// db store settings
+	db DB
 
-	// Workers store all sub-card's Workers
-	Workers Workers
+	// PipeSrv
+	nodes [2]driver.Node
+
+	// workers store all sub-card's workers
+	workers Workers
 }
 
 var (
@@ -59,25 +69,31 @@ func Init() {
 	M = Manager{}
 }
 
-// Start does registing, and loads cfg from file
-func (m *Manager) Start(DBFile string) error {
+// Init does registing, and loads cfg from file
+func (m *Manager) Init(DBFile string) error {
 
-	m.Workers = Workers{}
-	if err := m.Workers.register(); err != nil {
+	m.workers = Workers{}
+	if err := m.workers.register(); err != nil {
 		return err
 	}
 
-	if err := m.DB.loadFromFile(DBFile); err != nil {
+	if err := m.db.loadFromFile(DBFile); err != nil {
 		return err
 	}
 
-	for path, params := range m.DB.Store {
+	// tempz
+	m.nodes[0] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
+		Prefix: 0}
+	m.nodes[1] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
+		Prefix: 1000}
+
+	for path, params := range m.db.Store {
 		if err := m.Set(path, params); err != nil {
 			comm.Error.Printf("Appling saved params in path %s failed",
 				path)
 
 			// TODO: improve
-			if err := m.DB.clearDB(); err != nil {
+			if err := m.db.clearDB(); err != nil {
 				return err
 			}
 			break
@@ -102,7 +118,7 @@ func (m *Manager) Set(path string, params *Params) error {
 		return err
 	}
 
-	w := m.Workers.findWorker(params.WorkerName)
+	w := m.workers.findWorker(params.WorkerName)
 	if w == nil {
 		return errWorkerNotExists
 	}
@@ -112,21 +128,45 @@ func (m *Manager) Set(path string, params *Params) error {
 	}
 
 	if driver.IsWorkerDec(w) {
-		ir, err := m.upstreamRes(params.UpStream)
-		if err != nil {
-			return err
-		}
+		id, _ := strconv.Atoi(path)
 
-		// TODO: rtsp
+		if params.RtspIn != "" {
+			// tempz
+			rtsp := m.workers.findWorker("rtsp_254_0")
+			if rtsp == nil {
+				return errWorkerNotExists
+			}
 
-		err = driver.SetDecodePipe(w, ir)
-		if err != nil {
-			return err
+			if err := m.nodes[0].AllocPush(id, rtsp); err != nil {
+				return err
+			}
+
+			if err := m.nodes[0].AllocPull(id, w); err != nil {
+				return err
+			}
+		} else if _, err := m.findUP(params.UpStream); err != nil {
+			id, _ = strconv.Atoi(params.UpStream)
+
+			if err := m.nodes[1].AllocPull(id, w); err != nil {
+				return err
+			}
 		}
 	}
 
 	if driver.IsWorkerEnc(w) {
-		// TODO: rtsp
+		id, _ := strconv.Atoi(path)
+
+		if params.RtspOut != "" {
+			// tempz
+			rtsp := m.workers.findWorker("rtsp_255_0")
+			if rtsp == nil {
+				return errWorkerNotExists
+			}
+
+			if err := m.nodes[1].AllocPull(id, rtsp); err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := driver.SetWorkerRunning(w, params.IsRunning); err != nil {
@@ -134,7 +174,7 @@ func (m *Manager) Set(path string, params *Params) error {
 	}
 
 	dupParams := *params
-	if err := m.DB.set(path, &dupParams); err != nil {
+	if err := m.db.set(path, &dupParams); err != nil {
 		return err
 	}
 
@@ -152,7 +192,7 @@ func (m *Manager) Get(path string) (Params, error) {
 		return Params{}, errPathNotExists
 	}
 
-	saved := m.DB.get(path)
+	saved := m.db.get(path)
 	if saved == nil {
 		// TODO: empty path?
 		return Params{}, errPathNotExists
@@ -164,7 +204,7 @@ func (m *Manager) Get(path string) (Params, error) {
 func (m *Manager) unAllocedWorkers() []string {
 
 	var unUsed []string
-	for _, w := range m.Workers {
+	for _, w := range m.workers {
 		if m.isWorkerAlloc(w) == "" {
 			unUsed = append(unUsed, driver.GetWorkerName(w))
 		}
@@ -173,31 +213,28 @@ func (m *Manager) unAllocedWorkers() []string {
 	return unUsed
 }
 
-func (m *Manager) upstreamRes(up string) (driver.Pipe, error) {
+func (m *Manager) findUP(up string) (driver.Worker, error) {
 
-	// tempz
-	// if isPathValid(up) != nil {
-	// 	return driver.Pipe{}, errPathNotExists
-	// }
+	if isPathValid(up) != nil {
+		return nil, errPathNotExists
+	}
 
-	// saved := m.DB.get(up)
-	// if saved == nil {
-	// 	return driver.Pipe{}, errPathNotExists
-	// }
+	saved := m.db.get(up)
+	if saved == nil {
+		return nil, errPathNotExists
+	}
 
-	// upWorker := m.Workers.findWorker(saved.WorkerName)
-	// if upWorker == nil {
-	// 	return driver.Pipe{}, errWorkerNotExists
-	// }
+	upWorker := m.workers.findWorker(saved.WorkerName)
+	if upWorker == nil {
+		return nil, errWorkerNotExists
+	}
 
-	// return driver.SetEncodeRes(upWorker)
-
-	return driver.Pipe{}, nil
+	return upWorker, nil
 }
 
 func (m *Manager) isWorkerAlloc(w driver.Worker) string {
 
-	for path, params := range m.DB.Store {
+	for path, params := range m.db.Store {
 		if params.WorkerName == driver.GetWorkerName(w) {
 			return path
 		}

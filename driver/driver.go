@@ -109,7 +109,7 @@ func SetWorkerRunning(w Worker, r bool) error {
 	return nil
 }
 
-// SetEncodePipe set Pipe for Encoder
+// SetEncodeSes set Session to Encoder
 func SetEncodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Encoder); ok {
 		return w.Encoder(pi)
@@ -119,7 +119,7 @@ func SetEncodeSes(w Worker, pi *Session) error {
 	return errBadImplement
 }
 
-// SetDecodePipe set Pipe for Decode
+// SetDecodeSes set Session to Decode
 func SetDecodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Decoder); ok {
 		return w.Decoder(pi)
