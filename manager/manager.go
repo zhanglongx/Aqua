@@ -40,6 +40,13 @@ type Params struct {
 	RtspOut string
 }
 
+// Nodes ID
+const (
+	LeftNode = iota
+	RightNode
+	MaxNodes
+)
+
 // Manager is main struct for mananger operation
 type Manager struct {
 	lock sync.RWMutex
@@ -48,7 +55,7 @@ type Manager struct {
 	db DB
 
 	// PipeSrv
-	nodes [2]driver.Node
+	nodes [MaxNodes]driver.Node
 
 	// workers store all sub-card's workers
 	workers Workers
@@ -82,9 +89,9 @@ func (m *Manager) Init(DBFile string) error {
 	}
 
 	// tempz
-	m.nodes[0] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
+	m.nodes[LeftNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
 		Prefix: 0}
-	m.nodes[1] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
+	m.nodes[RightNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
 		Prefix: 1000}
 
 	for path, params := range m.db.Store {
@@ -137,17 +144,17 @@ func (m *Manager) Set(path string, params *Params) error {
 				return errWorkerNotExists
 			}
 
-			if err := m.nodes[0].AllocPush(id, rtsp); err != nil {
+			if err := m.nodes[LeftNode].AllocPush(id, rtsp); err != nil {
 				return err
 			}
 
-			if err := m.nodes[0].AllocPull(id, w); err != nil {
+			if err := m.nodes[LeftNode].AllocPull(id, w); err != nil {
 				return err
 			}
 		} else if _, err := m.findUP(params.UpStream); err != nil {
 			id, _ = strconv.Atoi(params.UpStream)
 
-			if err := m.nodes[1].AllocPull(id, w); err != nil {
+			if err := m.nodes[RightNode].AllocPull(id, w); err != nil {
 				return err
 			}
 		}
@@ -163,7 +170,7 @@ func (m *Manager) Set(path string, params *Params) error {
 				return errWorkerNotExists
 			}
 
-			if err := m.nodes[1].AllocPull(id, rtsp); err != nil {
+			if err := m.nodes[RightNode].AllocPull(id, rtsp); err != nil {
 				return err
 			}
 		}
