@@ -48,16 +48,16 @@ var (
 )
 
 // Create a svr
-func (sr *Node) Create() {
+func (n *Node) Create() {
 }
 
 // AllocPull alloc one pull
-func (sr *Node) AllocPull(id int, w Worker) error {
+func (n *Node) AllocPull(id int, w Worker) error {
 	var p *pipe
 
-	if p = sr.all[id]; p == nil {
-		p = &pipe{inPorts: []int{8000 + sr.Prefix + 2*id, 8000 + sr.Prefix + 2*id + 2}}
-		sr.all[id] = p
+	if p = n.all[id]; p == nil {
+		p = &pipe{inPorts: []int{8000 + n.Prefix + 2*id, 8000 + n.Prefix + 2*id + 2}}
+		n.all[id] = p
 	}
 
 	if w == nil || !IsWorkerDec(w) {
@@ -70,9 +70,8 @@ func (sr *Node) AllocPull(id int, w Worker) error {
 		}
 	}
 
-	p.outWorkers = append(p.outWorkers, w)
-
 	wid := GetWorkerWorkerID(w)
+	// IP := GetWorkerWorkerIP(w)
 
 	ses := Session{Ports: []int{8000 + 2*wid, 8000 + 2*wid + 2}}
 	if err := SetDecodeSes(w, &ses); err != nil {
@@ -81,13 +80,15 @@ func (sr *Node) AllocPull(id int, w Worker) error {
 
 	// TODO: start here
 
+	p.outWorkers = append(p.outWorkers, w)
+
 	return nil
 }
 
 // FreePull free one pull
-func (sr *Node) FreePull(id int, w Worker) error {
+func (n *Node) FreePull(id int, w Worker) error {
 	var p *pipe
-	if p = sr.all[id]; p == nil {
+	if p = n.all[id]; p == nil {
 		return errPipeNotExists
 	}
 
@@ -99,7 +100,6 @@ func (sr *Node) FreePull(id int, w Worker) error {
 	var k int
 	for k, exists = range p.outWorkers {
 		if exists == w {
-			p.outWorkers[k] = nil
 			break
 		}
 	}
@@ -108,23 +108,20 @@ func (sr *Node) FreePull(id int, w Worker) error {
 		return errPipeNotExists
 	}
 
-	// ip := GetWorkerWorkerIP(w)
-	// wid := GetWorkerWorkerID(w)
-
-	// ports := []int{8000 + 2*wid, 8000 + 2*wid + 2}
-
 	// TODO: free here
+
+	p.outWorkers[k] = nil
 
 	return nil
 }
 
 // AllocPush return Pipe
-func (sr *Node) AllocPush(id int, w Worker) error {
+func (n *Node) AllocPush(id int, w Worker) error {
 	var p *pipe
 
-	if p = sr.all[id]; p == nil {
-		p = &pipe{inPorts: []int{8000 + sr.Prefix + 4*id, 8000 + sr.Prefix + 4*id + 2}}
-		sr.all[id] = p
+	if p = n.all[id]; p == nil {
+		p = &pipe{inPorts: []int{8000 + n.Prefix + 4*id, 8000 + n.Prefix + 4*id + 2}}
+		n.all[id] = p
 	}
 
 	if w == nil || !IsWorkerEnc(w) {
@@ -135,7 +132,7 @@ func (sr *Node) AllocPush(id int, w Worker) error {
 		// TODO re-do
 	}
 
-	ses := Session{IP: sr.IP,
+	ses := Session{IP: n.IP,
 		Ports: p.inPorts}
 
 	if err := SetEncodeSes(w, &ses); err != nil {
@@ -148,15 +145,19 @@ func (sr *Node) AllocPush(id int, w Worker) error {
 }
 
 // FreePush free one push
-func (sr *Node) FreePush(id int, w Worker) error {
+func (n *Node) FreePush(id int, w Worker) error {
 	var p *pipe
-	if p = sr.all[id]; p == nil {
+	if p = n.all[id]; p == nil {
 		return errPipeNotExists
 	}
 
 	if w == nil || !IsWorkerEnc(w) {
 		return errNodeBadInput
 	}
+
+	// TODO: free here
+
+	p.inWorkers = nil
 
 	return nil
 }
