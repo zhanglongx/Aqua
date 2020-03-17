@@ -34,6 +34,7 @@ func (ws *Workers) register() error {
 	// tempz
 	var cards []regInfo = []regInfo{
 		{0, "local_encoder", net.IPv4(192, 165, 56, 35)},
+		{1, "local_decoder", net.IPv4(192, 165, 56, 35)},
 	}
 
 	alloced := make(map[int]bool)
@@ -43,6 +44,8 @@ func (ws *Workers) register() error {
 		switch found.name {
 		case driver.LocalEncoderName:
 			card = &driver.LocalE{}
+		case driver.LocalDecoderName:
+			card = &driver.LocalD{}
 		default:
 			comm.Error.Printf("Unknown card type %s", found.name)
 			continue

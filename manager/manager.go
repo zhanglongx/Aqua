@@ -90,9 +90,9 @@ func (m *Manager) Init(DBFile string) error {
 
 	// tempz
 	m.nodes[LeftNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
-		Prefix: 0}
-	m.nodes[RightNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
 		Prefix: 1000}
+	m.nodes[RightNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
+		Prefix: 0}
 
 	m.nodes[LeftNode].Create()
 	m.nodes[RightNode].Create()

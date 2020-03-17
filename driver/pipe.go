@@ -12,7 +12,7 @@ import (
 
 const (
 	inBasePort  = 8000
-	outBasePort = 6000
+	outBasePort = 8000
 )
 
 // Node alloc Pipe

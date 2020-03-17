@@ -13,14 +13,11 @@ import (
 	"github.com/zhanglongx/Aqua/comm"
 )
 
-// LocalEncoderName is the sub-card's name
-const LocalEncoderName string = "local_encoder"
+// LocalDecoderName is the sub-card's name
+const LocalDecoderName string = "local_decoder"
 
-const vlcExe = "c:\\Program Files\\VideoLAN\\VLC\\vlc.exe"
-const soutTpl = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=localhost,port=%d}"
-
-// LocalE is the main struct for sub-card
-type LocalE struct {
+// LocalD is the main struct for sub-card
+type LocalD struct {
 	// Card Slot
 	Slot int
 
@@ -28,14 +25,14 @@ type LocalE struct {
 	IP net.IP
 }
 
-// LocalEWorker is the main struct for sub-card's
+// LocalDWorker is the main struct for sub-card's
 // Worker
-type LocalEWorker struct {
+type LocalDWorker struct {
 	workerID int
 
 	isRunning bool
 
-	card *LocalE
+	card *LocalD
 
 	cmd *exec.Cmd
 
@@ -43,13 +40,13 @@ type LocalEWorker struct {
 }
 
 // Open method
-func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
-	card := LocalE{
+func (l *LocalD) Open(s int, IP net.IP) ([]Worker, error) {
+	card := LocalD{
 		Slot: s,
 		IP:   IP,
 	}
 
-	var w *LocalEWorker = &LocalEWorker{
+	var w *LocalDWorker = &LocalDWorker{
 		workerID: 0,
 
 		card: &card,
@@ -59,23 +56,21 @@ func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
 }
 
 // Close method
-func (l *LocalE) Close() error {
+func (l *LocalD) Close() error {
 	return nil
 }
 
 // Control method
-func (w *LocalEWorker) Control(c CtlCmd) interface{} {
+func (w *LocalDWorker) Control(c CtlCmd) interface{} {
 	switch c {
 	case CtlCmdStart:
 		if w.isRunning == true {
 			return nil
 		}
 
-		sout := fmt.Sprintf(soutTpl, w.port[0])
+		url := fmt.Sprintf("rtp://localhost:%d", w.port[0])
 
-		w.cmd = exec.Command(vlcExe,
-			"d:\\Streams\\D1_1M_9330.ts",
-			"--sout", sout)
+		w.cmd = exec.Command(vlcExe, url)
 		if err := w.cmd.Start(); err != nil {
 			comm.Error.Printf("run vlc failed")
 			return err
@@ -97,7 +92,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 		w.isRunning = false
 
 	case CtlCmdName:
-		return fmt.Sprintf("%s_%d_%d", LocalEncoderName,
+		return fmt.Sprintf("%s_%d_%d", LocalDecoderName,
 			w.card.Slot, w.workerID)
 
 	case CtlCmdIP:
@@ -114,8 +109,8 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 	return nil
 }
 
-// Encode method
-func (w *LocalEWorker) Encode(sess *Session) error {
+// Decode method
+func (w *LocalDWorker) Decode(sess *Session) error {
 
 	w.port[0] = sess.Ports[0]
 	return nil
