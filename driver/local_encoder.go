@@ -49,13 +49,16 @@ func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
 		IP:   IP,
 	}
 
-	var w *LocalEWorker = &LocalEWorker{
-		workerID: 0,
-
-		card: &card,
-	}
-
-	return []Worker{w}, nil
+	return []Worker{
+		&LocalEWorker{
+			workerID: 0,
+			card:     &card,
+		},
+		&LocalEWorker{
+			workerID: 1,
+			card:     &card,
+		},
+	}, nil
 }
 
 // Close method

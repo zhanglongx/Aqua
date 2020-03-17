@@ -46,13 +46,16 @@ func (l *LocalD) Open(s int, IP net.IP) ([]Worker, error) {
 		IP:   IP,
 	}
 
-	var w *LocalDWorker = &LocalDWorker{
-		workerID: 0,
-
-		card: &card,
-	}
-
-	return []Worker{w}, nil
+	return []Worker{
+		&LocalDWorker{
+			workerID: 0,
+			card:     &card,
+		},
+		&LocalDWorker{
+			workerID: 1,
+			card:     &card,
+		},
+	}, nil
 }
 
 // Close method
