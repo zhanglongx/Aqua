@@ -137,6 +137,41 @@ func (m *Manager) Set(path string, params *Params) error {
 		return errWorkerInUse
 	}
 
+	saved := m.db.get(path)
+	if saved != nil && driver.GetWorkerName(w) != saved.WorkerName {
+		// redo exists
+		exists := m.workers.findWorker(saved.WorkerName)
+		if exists == nil {
+			return errWorkerNotExists
+		}
+
+		if driver.IsWorkerDec(exists) {
+			if saved.RtspIn != "" {
+				id, _ := strconv.Atoi(path)
+
+				if err := m.nodes[LeftNode].FreePull(id, exists); err != nil {
+					return err
+				}
+			}
+
+			if saved.UpStream != "" {
+				id, _ := strconv.Atoi(saved.UpStream)
+
+				if err := m.nodes[RightNode].FreePull(id, exists); err != nil {
+					return err
+				}
+			}
+		}
+
+		if driver.IsWorkerEnc(exists) {
+			id, _ := strconv.Atoi(path)
+
+			if err := m.nodes[RightNode].FreePush(id); err != nil {
+				return err
+			}
+		}
+	}
+
 	if driver.IsWorkerDec(w) {
 		id, _ := strconv.Atoi(path)
 
@@ -219,7 +254,7 @@ func (m *Manager) Get(path string) (Params, error) {
 	return *saved, nil
 }
 
-func (m *Manager) unAllocedWorkers() []string {
+func (m *Manager) unUsedWorkers() []string {
 
 	var unUsed []string
 	for _, w := range m.workers {
