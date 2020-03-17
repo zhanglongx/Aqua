@@ -41,13 +41,13 @@ type Worker interface {
 // Encoder defines Encoder family operation
 type Encoder interface {
 	Worker
-	Encoder(*Session) error
+	Encode(sess *Session) error
 }
 
 // Decoder defines Decoder family operation
 type Decoder interface {
 	Worker
-	Decoder(*Session) error
+	Decode(sess *Session) error
 }
 
 var (
@@ -112,7 +112,7 @@ func SetWorkerRunning(w Worker, r bool) error {
 // SetEncodeSes set Session to Encoder
 func SetEncodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Encoder); ok {
-		return w.Encoder(pi)
+		return w.Encode(pi)
 	}
 
 	comm.Error.Fatalf("Worker implements Encoder incorrectly")
@@ -122,7 +122,7 @@ func SetEncodeSes(w Worker, pi *Session) error {
 // SetDecodeSes set Session to Decode
 func SetDecodeSes(w Worker, pi *Session) error {
 	if w, ok := w.(Decoder); ok {
-		return w.Decoder(pi)
+		return w.Decode(pi)
 	}
 
 	comm.Error.Fatalf("Worker implements Decoder incorrectly")

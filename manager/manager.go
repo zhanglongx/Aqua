@@ -94,6 +94,9 @@ func (m *Manager) Init(DBFile string) error {
 	m.nodes[RightNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
 		Prefix: 1000}
 
+	m.nodes[LeftNode].Create()
+	m.nodes[RightNode].Create()
+
 	for path, params := range m.db.Store {
 		if err := m.Set(path, params); err != nil {
 			comm.Error.Printf("Appling saved params in path %s failed",
@@ -151,7 +154,11 @@ func (m *Manager) Set(path string, params *Params) error {
 			if err := m.nodes[LeftNode].AllocPull(id, w); err != nil {
 				return err
 			}
-		} else if _, err := m.findUP(params.UpStream); err != nil {
+		} else {
+			if _, err := m.findUP(params.UpStream); err != nil {
+				return err
+			}
+
 			id, _ = strconv.Atoi(params.UpStream)
 
 			if err := m.nodes[RightNode].AllocPull(id, w); err != nil {
@@ -173,6 +180,10 @@ func (m *Manager) Set(path string, params *Params) error {
 			if err := m.nodes[RightNode].AllocPull(id, rtsp); err != nil {
 				return err
 			}
+		}
+
+		if err := m.nodes[RightNode].AllocPush(id, w); err != nil {
+			return err
 		}
 	}
 

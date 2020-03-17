@@ -43,12 +43,12 @@ type Session struct {
 var (
 	errSetSessError  = errors.New("Set session failed")
 	errNodeBadInput  = errors.New("Bad input for node")
-	errPipeExists    = errors.New("Pipe already exists")
-	errPipeNotExists = errors.New("Pipe doesnot exists")
+	errPipeNotExists = errors.New("Pipe does not exists")
 )
 
 // Create a svr
 func (n *Node) Create() {
+	n.all = make(map[int]*pipe)
 }
 
 // AllocPull alloc one pull
@@ -66,7 +66,7 @@ func (n *Node) AllocPull(id int, w Worker) error {
 
 	for _, exists := range p.outWorkers {
 		if exists == w {
-			return errPipeExists
+			return nil
 		}
 	}
 
@@ -115,7 +115,7 @@ func (n *Node) FreePull(id int, w Worker) error {
 	return nil
 }
 
-// AllocPush return Pipe
+// AllocPush alloc one push
 func (n *Node) AllocPush(id int, w Worker) error {
 	var p *pipe
 
@@ -129,6 +129,9 @@ func (n *Node) AllocPush(id int, w Worker) error {
 	}
 
 	if exists := p.inWorkers; exists != nil {
+		if exists == w {
+			return nil
+		}
 		// TODO re-do
 	}
 
