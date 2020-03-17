@@ -46,9 +46,7 @@ type Session struct {
 }
 
 var (
-	errSetSessError  = errors.New("Set session failed")
-	errNodeBadInput  = errors.New("Bad input for node")
-	errPipeNotExists = errors.New("Pipe does not exists")
+	errNodeBadInput = errors.New("Bad input for node")
 )
 
 func helperPort(base int, prefix int, id int) []int {
@@ -98,7 +96,7 @@ func (n *Node) AllocPull(id int, w Worker) error {
 func (n *Node) FreePull(id int, w Worker) error {
 	var p *pipe
 	if p = n.all[id]; p == nil {
-		return errPipeNotExists
+		return nil
 	}
 
 	if w == nil || !IsWorkerDec(w) {
@@ -114,7 +112,7 @@ func (n *Node) FreePull(id int, w Worker) error {
 	}
 
 	if exists != w {
-		return errPipeNotExists
+		return nil
 	}
 
 	// TODO: free here
@@ -148,7 +146,7 @@ func (n *Node) AllocPush(id int, w Worker) error {
 		Ports: p.inPorts}
 
 	if err := SetEncodeSes(w, &ses); err != nil {
-		return errSetSessError
+		return err
 	}
 
 	p.inWorkers = w
@@ -157,18 +155,10 @@ func (n *Node) AllocPush(id int, w Worker) error {
 }
 
 // FreePush free one push
-func (n *Node) FreePush(id int, w Worker) error {
+func (n *Node) FreePush(id int) error {
 	var p *pipe
 	if p = n.all[id]; p == nil {
-		return errPipeNotExists
-	}
-
-	if w == nil || !IsWorkerEnc(w) {
-		return errNodeBadInput
-	}
-
-	if p.inWorkers != w {
-		return errPipeNotExists
+		return nil
 	}
 
 	// TODO: free here
