@@ -10,6 +10,11 @@ import (
 	"net"
 )
 
+const (
+	inBasePort  = 8000
+	outBasePort = 6000
+)
+
 // Node alloc Pipe
 type Node struct {
 	// IP is the Svr IP
@@ -46,6 +51,10 @@ var (
 	errPipeNotExists = errors.New("Pipe does not exists")
 )
 
+func helperPort(base int, prefix int, id int) []int {
+	return []int{base + prefix + 4*id, base + prefix + 4*id + 2}
+}
+
 // Create a svr
 func (n *Node) Create() {
 	n.all = make(map[int]*pipe)
@@ -56,7 +65,7 @@ func (n *Node) AllocPull(id int, w Worker) error {
 	var p *pipe
 
 	if p = n.all[id]; p == nil {
-		p = &pipe{inPorts: []int{8000 + n.Prefix + 2*id, 8000 + n.Prefix + 2*id + 2}}
+		p = &pipe{inPorts: helperPort(inBasePort, n.Prefix, id)}
 		n.all[id] = p
 	}
 
@@ -73,7 +82,7 @@ func (n *Node) AllocPull(id int, w Worker) error {
 	wid := GetWorkerWorkerID(w)
 	// IP := GetWorkerWorkerIP(w)
 
-	ses := Session{Ports: []int{8000 + 2*wid, 8000 + 2*wid + 2}}
+	ses := Session{Ports: helperPort(outBasePort, n.Prefix, wid)}
 	if err := SetDecodeSes(w, &ses); err != nil {
 		return err
 	}
@@ -96,8 +105,8 @@ func (n *Node) FreePull(id int, w Worker) error {
 		return errNodeBadInput
 	}
 
-	var exists Worker
 	var k int
+	var exists Worker
 	for k, exists = range p.outWorkers {
 		if exists == w {
 			break
@@ -120,7 +129,7 @@ func (n *Node) AllocPush(id int, w Worker) error {
 	var p *pipe
 
 	if p = n.all[id]; p == nil {
-		p = &pipe{inPorts: []int{8000 + n.Prefix + 4*id, 8000 + n.Prefix + 4*id + 2}}
+		p = &pipe{inPorts: helperPort(inBasePort, n.Prefix, id)}
 		n.all[id] = p
 	}
 
@@ -156,6 +165,10 @@ func (n *Node) FreePush(id int, w Worker) error {
 
 	if w == nil || !IsWorkerEnc(w) {
 		return errNodeBadInput
+	}
+
+	if p.inWorkers != w {
+		return errPipeNotExists
 	}
 
 	// TODO: free here
