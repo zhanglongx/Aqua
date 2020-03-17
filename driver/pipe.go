@@ -117,7 +117,7 @@ func (n *Node) FreePull(id int, w Worker) error {
 
 	// TODO: free here
 
-	p.outWorkers[k] = nil
+	p.outWorkers = remove(p.outWorkers, k)
 
 	return nil
 }
@@ -149,6 +149,8 @@ func (n *Node) AllocPush(id int, w Worker) error {
 		return err
 	}
 
+	// TODO: push here
+
 	p.inWorkers = w
 
 	return nil
@@ -166,4 +168,14 @@ func (n *Node) FreePush(id int) error {
 	p.inWorkers = nil
 
 	return nil
+}
+
+// https://yourbasic.org/golang/delete-element-slice/
+func remove(ws []Worker, i int) []Worker {
+	// Remove the element at index i from a.
+	ws[i] = ws[len(ws)-1] // Copy last element to index i.
+	ws[len(ws)-1] = nil   // Erase last element (write zero value).
+	ws = ws[:len(ws)-1]   // Truncate slice.
+
+	return ws
 }
