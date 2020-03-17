@@ -15,6 +15,10 @@ import (
 // DBVER is DB File Version
 const DBVER string = "1.0.0"
 
+// Params is the main struct used to set and
+// get path setttings
+type Params map[string]interface{}
+
 // DB contains all path' config. It's degsinged to be easily
 // exported to file (like JSON).
 // set() and get() are not thread-safe, it's caller's
@@ -28,7 +32,12 @@ type DB struct {
 	Version string
 
 	// Store contains all path params
-	Store map[string]*Params
+	Params []Params
+}
+
+// create initialize Params
+func (d *DB) create() {
+	d.Params = make([]Params, 32)
 }
 
 // loadFromFile load JSON file to Cfg
@@ -81,28 +90,39 @@ func (d *DB) saveToFile() error {
 
 // clearDB clear DB
 func (d *DB) clearDB() error {
-	d.Store = make(map[string]*Params, 0)
+
+	d.Params = make([]Params, 32)
 	return d.saveToFile()
 }
 
-// set set a new pathRow in DB, DB store *ONLY* the pointer
-// passed in, so make sure passing a whole new pathRow{}
-// everytime
-func (d *DB) set(ID string, p *Params) error {
+// set set a new Param in DB with informed ID
+func (d *DB) set(ID int, p Params) error {
 
-	d.Store[ID] = p
-
-	return d.saveToFile()
-}
-
-// get return a *pathRow in DB. Because set() and get() are
-// not thread-safe, you should get data in *pathRow copied,
-// before using any unlock method
-func (d *DB) get(ID string) *Params {
-
-	if d.Store[ID] == nil {
+	if ID < 0 {
 		return nil
 	}
 
-	return d.Store[ID]
+	if ID >= len(d.Params) {
+		t := make([]Params, len(d.Params), (cap(d.Params)+1)*2)
+		copy(t, d.Params)
+
+		d.Params = t
+	}
+
+	d.Params[ID] = p
+	return d.saveToFile()
+}
+
+// get get a exist Param in DB with informed ID
+func (d *DB) get(ID int) Params {
+
+	if ID < 0 {
+		return nil
+	}
+
+	if ID >= len(d.Params) {
+		return nil
+	}
+
+	return d.Params[ID]
 }
