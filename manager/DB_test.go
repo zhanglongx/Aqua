@@ -22,7 +22,11 @@ func TestDB_loadFromFile(t *testing.T) {
 		return
 	}
 
-	Params := db.get(-1)
+	if err := db.set(20, nil); err != nil {
+		fmt.Printf("Set failed")
+	}
+
+	Params := db.get(30)
 	if Params != nil {
 		fmt.Printf("%v", db.get(10))
 	}

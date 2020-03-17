@@ -7,6 +7,7 @@ package manager
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/zhanglongx/Aqua/comm"
@@ -22,9 +23,8 @@ type Params map[string]interface{}
 // DB contains all path' config. It's degsinged to be easily
 // exported to file (like JSON).
 // set() and get() are not thread-safe, it's caller's
-// responsibility to ensure that. To ensure data returned by
-// get() will not get rewritten, data from pathRow should be
-// copied before any unlock method.
+// responsibility to ensure that.
+// It's designed to copy params in set() and get()
 type DB struct {
 	jFile string
 
@@ -32,12 +32,12 @@ type DB struct {
 	Version string
 
 	// Store contains all path params
-	Params []Params
+	Params map[string]Params
 }
 
 // create initialize Params
 func (d *DB) create() {
-	d.Params = make([]Params, 32)
+	d.Params = make(map[string]Params)
 }
 
 // loadFromFile load JSON file to Cfg
@@ -91,7 +91,7 @@ func (d *DB) saveToFile() error {
 // clearDB clear DB
 func (d *DB) clearDB() error {
 
-	d.Params = make([]Params, 32)
+	d.Params = make(map[string]Params)
 	return d.saveToFile()
 }
 
@@ -102,14 +102,9 @@ func (d *DB) set(ID int, p Params) error {
 		return nil
 	}
 
-	if ID >= len(d.Params) {
-		t := make([]Params, len(d.Params), (cap(d.Params)+1)*2)
-		copy(t, d.Params)
+	id := fmt.Sprintf("%d", ID)
 
-		d.Params = t
-	}
-
-	d.Params[ID] = p
+	d.Params[id] = p
 	return d.saveToFile()
 }
 
@@ -120,9 +115,7 @@ func (d *DB) get(ID int) Params {
 		return nil
 	}
 
-	if ID >= len(d.Params) {
-		return nil
-	}
+	id := fmt.Sprintf("%d", ID)
 
-	return d.Params[ID]
+	return d.Params[id]
 }
