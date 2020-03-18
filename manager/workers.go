@@ -84,3 +84,15 @@ func (ws *Workers) findWorker(name string) driver.Worker {
 
 	return nil
 }
+
+// isWorkerAlloc find if a worker is alloc
+func (ws *Workers) isWorkerAlloc(w driver.Worker) int {
+
+	for k, exist := range *ws {
+		if exist == w {
+			return k
+		}
+	}
+
+	return -1
+}
