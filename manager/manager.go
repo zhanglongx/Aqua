@@ -175,13 +175,13 @@ func (ep *EncodePath) Get(ID int) (Params, error) {
 	defer ep.lock.RUnlock()
 
 	if !isPathValid(ID) {
-		return Params{}, errPathNotExists
+		return nil, errPathNotExists
 	}
 
 	saved := ep.db.get(ID)
 	if saved == nil {
 		// TODO: empty path?
-		return Params{}, errPathNotExists
+		return nil, errPathNotExists
 	}
 
 	return saved, nil
