@@ -96,7 +96,7 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 		return errWorkerNotExists
 	}
 
-	if k := ep.workers.isWorkerAlloc(w); k != -1 && k != ID {
+	if k := isWorkerAlloc(ep.encoders, w); k != -1 && k != ID {
 		return errWorkerInUse
 	}
 
@@ -187,20 +187,16 @@ func (ep *EncodePath) Get(ID int) (Params, error) {
 	return saved, nil
 }
 
-func unUsedWorkers(inUse []driver.Worker, ws Workers) []string {
+// isWorkerAlloc find if a worker is alloc
+func isWorkerAlloc(ws map[int]driver.Worker, w driver.Worker) int {
 
-	var unUsed []string
-	for _, w := range inUse {
-		if w == nil {
-			continue
-		}
-
-		if ws.isWorkerAlloc(w) == -1 {
-			unUsed = append(unUsed, driver.GetWorkerName(w))
+	for k, exist := range ws {
+		if exist == w {
+			return k
 		}
 	}
 
-	return unUsed
+	return -1
 }
 
 func isPathValid(ID int) bool {
