@@ -34,7 +34,6 @@ func (ws *Workers) register() error {
 	// tempz
 	var cards []regInfo = []regInfo{
 		{0, "local_encoder", net.IPv4(192, 165, 56, 35)},
-		{1, "local_decoder", net.IPv4(192, 165, 56, 35)},
 	}
 
 	alloced := make(map[int]bool)

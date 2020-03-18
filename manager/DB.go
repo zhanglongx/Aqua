@@ -16,10 +16,6 @@ import (
 // DBVER is DB File Version
 const DBVER string = "1.0.0"
 
-// Params is the main struct used to set and
-// get path setttings
-type Params map[string]interface{}
-
 // DB contains all path' config. It's degsinged to be easily
 // exported to file (like JSON).
 // set() and get() are not thread-safe, it's caller's
