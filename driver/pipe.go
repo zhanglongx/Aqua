@@ -8,15 +8,18 @@ package driver
 import (
 	"errors"
 	"net"
+	"sync"
 )
 
 const (
-	inBasePort  = 8000
-	outBasePort = 8000
+	inBasePort  = 6000
+	outBasePort = 6000
 )
 
-// Node alloc Pipe
-type Node struct {
+// PipeSvr alloc Pipe
+type PipeSvr struct {
+	lock sync.Mutex
+
 	// IP is the Svr IP
 	IP net.IP
 
@@ -54,17 +57,21 @@ func helperPort(base int, prefix int, id int) []int {
 }
 
 // Create a svr
-func (n *Node) Create() {
-	n.all = make(map[int]*pipe)
+func (sr *PipeSvr) Create() {
+	sr.all = make(map[int]*pipe)
 }
 
 // AllocPull alloc one pull
-func (n *Node) AllocPull(id int, w Worker) error {
+func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 	var p *pipe
 
-	if p = n.all[id]; p == nil {
-		p = &pipe{inPorts: helperPort(inBasePort, n.Prefix, id)}
-		n.all[id] = p
+	sr.lock.Lock()
+
+	defer sr.lock.Unlock()
+
+	if p = sr.all[id]; p == nil {
+		p = &pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		sr.all[id] = p
 	}
 
 	if w == nil || !IsWorkerDec(w) {
@@ -80,7 +87,7 @@ func (n *Node) AllocPull(id int, w Worker) error {
 	wid := GetWorkerWorkerID(w)
 	// IP := GetWorkerWorkerIP(w)
 
-	ses := Session{Ports: helperPort(outBasePort, n.Prefix, wid)}
+	ses := Session{Ports: helperPort(outBasePort, sr.Prefix, wid)}
 	if err := SetDecodeSes(w, &ses); err != nil {
 		return err
 	}
@@ -93,9 +100,14 @@ func (n *Node) AllocPull(id int, w Worker) error {
 }
 
 // FreePull free one pull
-func (n *Node) FreePull(id int, w Worker) error {
+func (sr *PipeSvr) FreePull(id int, w Worker) error {
 	var p *pipe
-	if p = n.all[id]; p == nil {
+
+	sr.lock.Lock()
+
+	defer sr.lock.Unlock()
+
+	if p = sr.all[id]; p == nil {
 		return nil
 	}
 
@@ -123,12 +135,16 @@ func (n *Node) FreePull(id int, w Worker) error {
 }
 
 // AllocPush alloc one push
-func (n *Node) AllocPush(id int, w Worker) error {
+func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 	var p *pipe
 
-	if p = n.all[id]; p == nil {
-		p = &pipe{inPorts: helperPort(inBasePort, n.Prefix, id)}
-		n.all[id] = p
+	sr.lock.Lock()
+
+	defer sr.lock.Unlock()
+
+	if p = sr.all[id]; p == nil {
+		p = &pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		sr.all[id] = p
 	}
 
 	if w == nil || !IsWorkerEnc(w) {
@@ -142,7 +158,7 @@ func (n *Node) AllocPush(id int, w Worker) error {
 		// TODO re-do
 	}
 
-	ses := Session{IP: n.IP,
+	ses := Session{IP: sr.IP,
 		Ports: p.inPorts}
 
 	if err := SetEncodeSes(w, &ses); err != nil {
@@ -157,9 +173,14 @@ func (n *Node) AllocPush(id int, w Worker) error {
 }
 
 // FreePush free one push
-func (n *Node) FreePush(id int) error {
+func (sr *PipeSvr) FreePush(id int) error {
 	var p *pipe
-	if p = n.all[id]; p == nil {
+
+	sr.lock.Lock()
+
+	defer sr.lock.Unlock()
+
+	if p = sr.all[id]; p == nil {
 		return nil
 	}
 

@@ -9,7 +9,6 @@ package manager
 
 import (
 	"errors"
-	"net"
 	"regexp"
 	"strconv"
 	"sync"
@@ -20,42 +19,17 @@ import (
 
 // Params is the main struct used to set and
 // get path setttings
-type Params struct {
-	// Path Name
-	PathName string
+type Params map[string]interface{}
 
-	// Worker name
-	WorkerName string
-
-	// path's status
-	IsRunning bool
-
-	// UpStream pathID
-	UpStream string
-
-	// Rtsp in
-	RtspIn string
-
-	// Rtsp out
-	RtspOut string
-}
-
-// Nodes ID
-const (
-	LeftNode = iota
-	RightNode
-	MaxNodes
-)
-
-// Manager is main struct for mananger operation
-type Manager struct {
+// EncodePath is the main struct for Encoder's Path
+type EncodePath struct {
 	lock sync.RWMutex
 
 	// db store settings
 	db DB
 
-	// PipeSrv
-	nodes [MaxNodes]driver.Node
+	// encoders holds all driver.Encoder
+	encoders map[int]driver.Worker
 
 	// workers store all sub-card's workers
 	workers Workers
@@ -68,42 +42,36 @@ var (
 	errWorkerInUse     = errors.New("Worker In Use")
 )
 
-// M is the instance of Manager
-var M Manager
+// EPath is the instance of EncoderPath
+var EPath EncodePath
 
-// Init create M and R
+// Init create all instances
 func Init() {
-	M = Manager{}
+	EPath = EncodePath{}
 }
 
-// Init does registing, and loads cfg from file
-func (m *Manager) Init(DBFile string) error {
+// Create does registing, and loads cfg from file
+func (ep *EncodePath) Create(DBFile string) error {
 
-	m.workers = Workers{}
-	if err := m.workers.register(); err != nil {
+	ep.workers = Workers{}
+	if err := ep.workers.register(); err != nil {
 		return err
 	}
 
-	if err := m.db.loadFromFile(DBFile); err != nil {
+	ep.db.create()
+	if err := ep.db.loadFromFile(DBFile); err != nil {
 		return err
 	}
 
-	// tempz
-	m.nodes[LeftNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
-		Prefix: 1000}
-	m.nodes[RightNode] = driver.Node{IP: net.IPv4(192, 165, 53, 35),
-		Prefix: 0}
+	for IDSTR, params := range ep.db.Params {
+		id, _ := strconv.Atoi(IDSTR)
 
-	m.nodes[LeftNode].Create()
-	m.nodes[RightNode].Create()
-
-	for path, params := range m.db.Store {
-		if err := m.Set(path, params); err != nil {
-			comm.Error.Printf("Appling saved params in path %s failed",
-				path)
+		if err := ep.Set(id, params); err != nil {
+			comm.Error.Printf("Appling saved params in path %d failed", id)
+			comm.Error.Printf("Reseting Encoder DB to default")
 
 			// TODO: improve
-			if err := m.db.clearDB(); err != nil {
+			if err := ep.db.clearDB(); err != nil {
 				return err
 			}
 			break
@@ -114,13 +82,13 @@ func (m *Manager) Init(DBFile string) error {
 }
 
 // Set processes data settings
-func (m *Manager) Set(path string, params *Params) error {
+func (ep *EncodePath) Set(ID int, params Params) error {
 
-	m.lock.Lock()
+	ep.lock.Lock()
 
-	defer m.lock.Unlock()
+	defer ep.lock.Unlock()
 
-	if isPathValid(path) != nil {
+	if isPathValid(ID) {
 		return errPathNotExists
 	}
 
@@ -128,106 +96,59 @@ func (m *Manager) Set(path string, params *Params) error {
 		return err
 	}
 
-	w := m.workers.findWorker(params.WorkerName)
+	w := ep.workers.findWorker(params["WorkerName"].(string))
 	if w == nil {
 		return errWorkerNotExists
 	}
 
-	if inUse := m.isWorkerAlloc(w); inUse != "" && inUse != path {
+	if ep.isWorkerAlloc(w) {
 		return errWorkerInUse
 	}
 
-	saved := m.db.get(path)
-	if saved != nil && driver.GetWorkerName(w) != saved.WorkerName {
-		// redo exists
-		exists := m.workers.findWorker(saved.WorkerName)
-		if exists == nil {
-			return errWorkerNotExists
-		}
-
-		if driver.IsWorkerDec(exists) {
-			if saved.RtspIn != "" {
-				id, _ := strconv.Atoi(path)
-
-				if err := m.nodes[LeftNode].FreePull(id, exists); err != nil {
-					return err
-				}
-			}
-
-			if saved.UpStream != "" {
-				id, _ := strconv.Atoi(saved.UpStream)
-
-				if err := m.nodes[RightNode].FreePull(id, exists); err != nil {
-					return err
-				}
-			}
-		}
-
-		if driver.IsWorkerEnc(exists) {
-			id, _ := strconv.Atoi(path)
-
-			if err := m.nodes[RightNode].FreePush(id); err != nil {
-				return err
-			}
-		}
+	if ep.encoders[ID] != nil {
+		// TODO: redo
 	}
 
+	// RTSP
 	if driver.IsWorkerDec(w) {
-		id, _ := strconv.Atoi(path)
-
-		if params.RtspIn != "" {
-			// tempz
-			rtsp := m.workers.findWorker("rtsp_254_0")
+		if params["RtspIn"].(string) != "" {
+			rtsp := ep.workers.findWorker("rtsp_254_0")
 			if rtsp == nil {
 				return errWorkerNotExists
 			}
 
-			if err := m.nodes[LeftNode].AllocPush(id, rtsp); err != nil {
+			pipe := driver.Pipes[driver.PipeRTSPIN]
+			if err := pipe.AllocPush(ID, rtsp); err != nil {
 				return err
 			}
 
-			if err := m.nodes[LeftNode].AllocPull(id, w); err != nil {
-				return err
-			}
-		} else {
-			if _, err := m.findUP(params.UpStream); err != nil {
-				return err
-			}
-
-			id, _ = strconv.Atoi(params.UpStream)
-
-			if err := m.nodes[RightNode].AllocPull(id, w); err != nil {
+			if err := pipe.AllocPull(ID, w); err != nil {
 				return err
 			}
 		}
 	}
 
-	if driver.IsWorkerEnc(w) {
-		id, _ := strconv.Atoi(path)
-
-		if params.RtspOut != "" {
-			// tempz
-			rtsp := m.workers.findWorker("rtsp_255_0")
-			if rtsp == nil {
-				return errWorkerNotExists
-			}
-
-			if err := m.nodes[RightNode].AllocPull(id, rtsp); err != nil {
-				return err
-			}
-		}
-
-		if err := m.nodes[RightNode].AllocPush(id, w); err != nil {
-			return err
-		}
-	}
-
-	if err := driver.SetWorkerRunning(w, params.IsRunning); err != nil {
+	pipe := driver.Pipes[driver.PipeEncoder]
+	if err := pipe.AllocPush(ID, w); err != nil {
 		return err
 	}
 
-	dupParams := *params
-	if err := m.db.set(path, &dupParams); err != nil {
+	// TODO: rtspOut
+	rtsp := ep.workers.findWorker("rtsp_255_0")
+	if rtsp == nil {
+		return errWorkerNotExists
+	}
+
+	if err := pipe.AllocPull(ID, rtsp); err != nil {
+		return err
+	}
+
+	isRunning := params["IsRunning"].(bool)
+	if err := driver.SetWorkerRunning(w, isRunning); err != nil {
+		return err
+	}
+
+	if err := ep.db.set(ID, params); err != nil {
 		return err
 	}
 
@@ -235,30 +156,30 @@ func (m *Manager) Set(path string, params *Params) error {
 }
 
 // Get queries data
-func (m *Manager) Get(path string) (Params, error) {
+func (ep *EncodePath) Get(ID int) (Params, error) {
 
-	m.lock.RLock()
+	ep.lock.RLock()
 
-	defer m.lock.RUnlock()
+	defer ep.lock.RUnlock()
 
-	if isPathValid(path) != nil {
+	if isPathValid(ID) {
 		return Params{}, errPathNotExists
 	}
 
-	saved := m.db.get(path)
+	saved := ep.db.get(ID)
 	if saved == nil {
 		// TODO: empty path?
 		return Params{}, errPathNotExists
 	}
 
-	return *saved, nil
+	return saved, nil
 }
 
-func (m *Manager) unUsedWorkers() []string {
+func (ep *EncodePath) unUsedWorkers() []string {
 
 	var unUsed []string
-	for _, w := range m.workers {
-		if m.isWorkerAlloc(w) == "" {
+	for _, w := range ep.workers {
+		if !ep.isWorkerAlloc(w) {
 			unUsed = append(unUsed, driver.GetWorkerName(w))
 		}
 	}
@@ -266,50 +187,32 @@ func (m *Manager) unUsedWorkers() []string {
 	return unUsed
 }
 
-func (m *Manager) findUP(up string) (driver.Worker, error) {
+func (ep *EncodePath) isWorkerAlloc(w driver.Worker) bool {
 
-	if isPathValid(up) != nil {
-		return nil, errPathNotExists
-	}
-
-	saved := m.db.get(up)
-	if saved == nil {
-		return nil, errPathNotExists
-	}
-
-	upWorker := m.workers.findWorker(saved.WorkerName)
-	if upWorker == nil {
-		return nil, errWorkerNotExists
-	}
-
-	return upWorker, nil
-}
-
-func (m *Manager) isWorkerAlloc(w driver.Worker) string {
-
-	for path, params := range m.db.Store {
-		if params.WorkerName == driver.GetWorkerName(w) {
-			return path
+	for _, exist := range ep.encoders {
+		if exist == w {
+			return true
 		}
 	}
 
-	return ""
+	return false
 }
 
-func isPathValid(p string) error {
-	if _, err := strconv.Atoi(p); err != nil {
-		return err
+func isPathValid(ID int) bool {
+	if ID < 0 {
+		return false
 	}
 
-	return nil
+	return true
 }
 
 // checkParams only do basic literal check, and leaves legal
 // checking alone
-func checkParams(p *Params) error {
+func checkParams(params Params) error {
 
 	// TODO: unicode
-	matched, err := regexp.Match(`\S+_\d+_\d+`, []byte(p.WorkerName))
+	wn := params["WorkerName"].(string)
+	matched, err := regexp.Match(`\S+_\d+_\d+`, []byte(wn))
 	if !matched || err != nil {
 		return errBadParams
 	}
