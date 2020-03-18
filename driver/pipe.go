@@ -136,11 +136,12 @@ func (sr *PipeSvr) FreePull(id int, w Worker) error {
 
 // AllocPush alloc one push
 func (sr *PipeSvr) AllocPush(id int, w Worker) error {
-	var p *pipe
 
 	sr.lock.Lock()
 
 	defer sr.lock.Unlock()
+
+	var p *pipe
 
 	if p = sr.all[id]; p == nil {
 		p = &pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
@@ -174,11 +175,12 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 
 // FreePush free one push
 func (sr *PipeSvr) FreePush(id int) error {
-	var p *pipe
 
 	sr.lock.Lock()
 
 	defer sr.lock.Unlock()
+
+	var p *pipe
 
 	if p = sr.all[id]; p == nil {
 		return nil

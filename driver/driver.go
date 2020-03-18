@@ -65,7 +65,7 @@ const (
 var Pipes [3]*PipeSvr
 
 // Init create PipeSvr
-func Init() {
+func init() {
 	Pipes[PipeRTSPIN] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 0}
 	Pipes[PipeEncoder] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 1000}
 	Pipes[PipeDecoder] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 2000}

@@ -43,15 +43,12 @@ var (
 )
 
 // EPath is the instance of EncoderPath
-var EPath EncodePath
-
-// Init create all instances
-func Init() {
-	EPath = EncodePath{}
-}
+var EPath EncodePath = EncodePath{}
 
 // Create does registing, and loads cfg from file
 func (ep *EncodePath) Create(DBFile string) error {
+
+	ep.encoders = make(map[int]driver.Worker)
 
 	ep.workers = Workers{}
 	if err := ep.workers.register(); err != nil {
@@ -63,8 +60,8 @@ func (ep *EncodePath) Create(DBFile string) error {
 		return err
 	}
 
-	for IDSTR, params := range ep.db.Params {
-		id, _ := strconv.Atoi(IDSTR)
+	for IDStr, params := range ep.db.Params {
+		id, _ := strconv.Atoi(IDStr)
 
 		if err := ep.Set(id, params); err != nil {
 			comm.Error.Printf("Appling saved params in path %d failed", id)
@@ -88,7 +85,7 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 
 	defer ep.lock.Unlock()
 
-	if isPathValid(ID) {
+	if !isPathValid(ID) {
 		return errPathNotExists
 	}
 
@@ -101,12 +98,27 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 		return errWorkerNotExists
 	}
 
-	if ep.isWorkerAlloc(w) {
+	if ep.isWorkerAlloc(w) != -1 && ep.isWorkerAlloc(w) != ID {
 		return errWorkerInUse
 	}
 
 	if ep.encoders[ID] != nil {
-		// TODO: redo
+		// redo
+		pipe := driver.Pipes[driver.PipeRTSPIN]
+		if err := pipe.FreePush(ID); err != nil {
+			return err
+		}
+
+		if err := pipe.FreePull(ID, ep.encoders[ID]); err != nil {
+			return err
+		}
+
+		pipe = driver.Pipes[driver.PipeEncoder]
+		if err := pipe.FreePush(ID); err != nil {
+			return err
+		}
+
+		ep.encoders[ID] = nil
 	}
 
 	// RTSP
@@ -134,14 +146,16 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 	}
 
 	// TODO: rtspOut
-	rtsp := ep.workers.findWorker("rtsp_255_0")
-	if rtsp == nil {
-		return errWorkerNotExists
-	}
+	// rtsp := ep.workers.findWorker("rtsp_255_0")
+	// if rtsp == nil {
+	// 	return errWorkerNotExists
+	// }
 
-	if err := pipe.AllocPull(ID, rtsp); err != nil {
-		return err
-	}
+	// if err := pipe.AllocPull(ID, rtsp); err != nil {
+	// 	return err
+	// }
+
+	ep.encoders[ID] = w
 
 	isRunning := params["IsRunning"].(bool)
 	if err := driver.SetWorkerRunning(w, isRunning); err != nil {
@@ -162,7 +176,7 @@ func (ep *EncodePath) Get(ID int) (Params, error) {
 
 	defer ep.lock.RUnlock()
 
-	if isPathValid(ID) {
+	if !isPathValid(ID) {
 		return Params{}, errPathNotExists
 	}
 
@@ -179,7 +193,7 @@ func (ep *EncodePath) unUsedWorkers() []string {
 
 	var unUsed []string
 	for _, w := range ep.workers {
-		if !ep.isWorkerAlloc(w) {
+		if ep.isWorkerAlloc(w) == -1 {
 			unUsed = append(unUsed, driver.GetWorkerName(w))
 		}
 	}
@@ -187,15 +201,15 @@ func (ep *EncodePath) unUsedWorkers() []string {
 	return unUsed
 }
 
-func (ep *EncodePath) isWorkerAlloc(w driver.Worker) bool {
+func (ep *EncodePath) isWorkerAlloc(w driver.Worker) int {
 
-	for _, exist := range ep.encoders {
+	for k, exist := range ep.encoders {
 		if exist == w {
-			return true
+			return k
 		}
 	}
 
-	return false
+	return -1
 }
 
 func isPathValid(ID int) bool {
