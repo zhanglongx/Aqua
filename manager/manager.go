@@ -39,7 +39,7 @@ var (
 	errBadParams       = errors.New("Params parse error")
 	errPathNotExists   = errors.New("Path not exists")
 	errWorkerNotExists = errors.New("Worker not exists")
-	errWorkerInUse     = errors.New("Worker In Use")
+	errWorkerInUse     = errors.New("Worker in Use")
 )
 
 // EPath is the instance of EncoderPath
@@ -188,9 +188,9 @@ func (ep *EncodePath) Get(ID int) (Params, error) {
 }
 
 // isWorkerAlloc find if a worker is alloc
-func isWorkerAlloc(ws map[int]driver.Worker, w driver.Worker) int {
+func isWorkerAlloc(inUse map[int]driver.Worker, w driver.Worker) int {
 
-	for k, exist := range ws {
+	for k, exist := range inUse {
 		if exist == w {
 			return k
 		}
