@@ -100,6 +100,11 @@ func (d *DB) set(ID int, p Params) error {
 
 	id := fmt.Sprintf("%d", ID)
 
+	if p == nil {
+		delete(d.Params, id)
+		return d.saveToFile()
+	}
+
 	d.Params[id] = p
 	return d.saveToFile()
 }

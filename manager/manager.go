@@ -65,13 +65,11 @@ func (ep *EncodePath) Create(DBFile string) error {
 
 		if err := ep.Set(id, params); err != nil {
 			comm.Error.Printf("Appling saved params in path %d failed", id)
-			comm.Error.Printf("Reseting Encoder DB to default")
 
-			// TODO: improve
-			if err := ep.db.clearDB(); err != nil {
+			// Just clear the path?
+			if err := ep.db.set(id, nil); err != nil {
 				return err
 			}
-			break
 		}
 	}
 
@@ -98,12 +96,12 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 		return errWorkerNotExists
 	}
 
-	if ep.workers.isWorkerAlloc(w) != -1 && ep.workers.isWorkerAlloc(w) != ID {
+	if k := ep.workers.isWorkerAlloc(w); k != -1 && k != ID {
 		return errWorkerInUse
 	}
 
 	if ep.encoders[ID] != nil {
-		// redo
+		// un-do
 		pipe := driver.Pipes[driver.PipeRTSPIN]
 		if err := pipe.FreePush(ID); err != nil {
 			return err
@@ -216,6 +214,11 @@ func isPathValid(ID int) bool {
 // checkParams only do basic literal check, and leaves legal
 // checking alone
 func checkParams(params Params) error {
+
+	if params == nil {
+		// TODO: un-do a path?
+		return errBadParams
+	}
 
 	// TODO: unicode
 	wn := params["WorkerName"].(string)

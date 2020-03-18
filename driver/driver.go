@@ -85,16 +85,6 @@ func GetWorkerName(w Worker) string {
 	return ""
 }
 
-// GetWorkerSlot get Worker's Slot
-func GetWorkerSlot(w Worker) int {
-	if s, ok := w.Control(CtlCmdSlot).(int); ok {
-		return s
-	}
-
-	comm.Error.Fatalf("Worker implements CtlCmdSlot incorrectly")
-	return 0
-}
-
 // GetWorkerWorkerID get Worker's Slot
 func GetWorkerWorkerID(w Worker) int {
 	if s, ok := w.Control(CtlCmdWorkerID).(int); ok {
