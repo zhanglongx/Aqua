@@ -167,6 +167,16 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 	return nil
 }
 
+// GetWorkers gets all workers redigested under a path
+func (ep *EncodePath) GetWorkers() []string {
+	var all []string
+	for _, w := range ep.workers {
+		all = append(all, driver.GetWorkerName(w))
+	}
+
+	return all
+}
+
 // Get queries data
 func (ep *EncodePath) Get(ID int) (Params, error) {
 
