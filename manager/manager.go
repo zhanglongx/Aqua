@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file.
 
 // Package manager is the core module in Aqua, deals with
-// config loading, sub-card's worker setting
+// config loading, sub-card's worker setting and getting
 package manager
 
 import (
@@ -17,19 +17,19 @@ import (
 	"github.com/zhanglongx/Aqua/driver"
 )
 
-// Params is the main struct used to set and
+// Params is the main data struct used to set and
 // get path setttings
 type Params map[string]interface{}
 
-// EncodePath is the main struct for Encoder's Path
-type EncodePath struct {
+// Path is the main struct for control sub-cards
+type Path struct {
 	lock sync.RWMutex
 
 	// db store settings
 	db DB
 
-	// encoders holds all driver.Encoder
-	encoders map[int]driver.Worker
+	// inUse holds all in use driver.Worker
+	inUse map[int]driver.Worker
 
 	// workers store all sub-card's workers
 	workers Workers
@@ -43,13 +43,14 @@ var (
 )
 
 // EPath is the instance of EncoderPath
-var EPath EncodePath = EncodePath{}
+var EPath Path = Path{}
 
 // Create does registing, and loads cfg from file
-func (ep *EncodePath) Create(DBFile string) error {
+func (ep *Path) Create(DBFile string) error {
 
-	ep.encoders = make(map[int]driver.Worker)
+	ep.inUse = make(map[int]driver.Worker)
 
+	// tempz: receive from Parameters
 	ep.workers = Workers{}
 	if err := ep.workers.register(); err != nil {
 		return err
@@ -77,7 +78,7 @@ func (ep *EncodePath) Create(DBFile string) error {
 }
 
 // Set processes data settings
-func (ep *EncodePath) Set(ID int, params Params) error {
+func (ep *Path) Set(ID int, params Params) error {
 
 	ep.lock.Lock()
 
@@ -96,36 +97,54 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 		return errWorkerNotExists
 	}
 
-	if k := isWorkerAlloc(ep.encoders, w); k != -1 && k != ID {
+	if k := ep.isWorkerAlloc(w); k != -1 && k != ID {
 		return errWorkerInUse
 	}
 
-	if ep.encoders[ID] != nil {
+	if exists := ep.inUse[ID]; exists != nil {
 		// un-do
-		pipe := driver.Pipes[driver.PipeRTSPIN]
-		if err := pipe.FreePush(ID); err != nil {
-			return err
+		// FIXME: only true in EncodePath
+		if driver.IsWorkerDec(exists) {
+			pipe := driver.Pipes[driver.PipeRTSPIN]
+			if err := pipe.FreePush(ID); err != nil {
+				return err
+			}
+
+			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
+				return err
+			}
+
+			// hack: double free to be sure pipe.Pull is freed anyway
+			pipe = driver.Pipes[driver.PipeEncoder]
+			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
+				return err
+			}
+
+			// FIXME: un-do RTSPIn ?
 		}
 
-		if err := pipe.FreePull(ID, ep.encoders[ID]); err != nil {
-			return err
+		if driver.IsWorkerEnc(exists) {
+			pipe := driver.Pipes[driver.PipeEncoder]
+			if err := pipe.FreePush(ID); err != nil {
+				return err
+			}
 		}
 
-		pipe = driver.Pipes[driver.PipeEncoder]
-		if err := pipe.FreePush(ID); err != nil {
-			return err
-		}
+		// TODO: maybe more?
 
-		ep.encoders[ID] = nil
+		ep.inUse[ID] = nil
 	}
 
 	// RTSP
-	if driver.IsWorkerDec(w) {
-		if params["RtspIn"].(string) != "" {
+	if params["RtspIn"].(string) != "" {
+		// hack: if it's a rtsp worker
+		if driver.IsWorkerDec(w) {
 			rtsp := ep.workers.findWorker("rtsp_254_0")
 			if rtsp == nil {
 				return errWorkerNotExists
 			}
+
+			// TODO: control rtsp in
 
 			pipe := driver.Pipes[driver.PipeRTSPIN]
 			if err := pipe.AllocPush(ID, rtsp); err != nil {
@@ -135,25 +154,39 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 			if err := pipe.AllocPull(ID, w); err != nil {
 				return err
 			}
+		} else {
+			// TODO: rtsp direct in
+		}
+	} else {
+		// Inner
+		if driver.IsWorkerDec(w) {
+			pipe := driver.Pipes[driver.PipeEncoder]
+			if err := pipe.AllocPull(ID, w); err != nil {
+				return err
+			}
 		}
 	}
 
-	pipe := driver.Pipes[driver.PipeEncoder]
-	if err := pipe.AllocPush(ID, w); err != nil {
-		return err
+	if driver.IsWorkerEnc(w) {
+		pipe := driver.Pipes[driver.PipeEncoder]
+		if err := pipe.AllocPush(ID, w); err != nil {
+			return err
+		}
+
+		// TODO: rtspOut
+		// rtsp := ep.workers.findWorker("rtsp_255_0")
+		// if rtsp == nil {
+		// 	return errWorkerNotExists
+		// }
+
+		// if err := pipe.AllocPull(ID, rtsp); err != nil {
+		// 	return err
+		// }
 	}
 
-	// TODO: rtspOut
-	// rtsp := ep.workers.findWorker("rtsp_255_0")
-	// if rtsp == nil {
-	// 	return errWorkerNotExists
-	// }
+	ep.inUse[ID] = w
 
-	// if err := pipe.AllocPull(ID, rtsp); err != nil {
-	// 	return err
-	// }
-
-	ep.encoders[ID] = w
+	// TODO: apply params to Workers
 
 	isRunning := params["IsRunning"].(bool)
 	if err := driver.SetWorkerRunning(w, isRunning); err != nil {
@@ -167,18 +200,8 @@ func (ep *EncodePath) Set(ID int, params Params) error {
 	return nil
 }
 
-// GetWorkers gets all workers redigested under a path
-func (ep *EncodePath) GetWorkers() []string {
-	var all []string
-	for _, w := range ep.workers {
-		all = append(all, driver.GetWorkerName(w))
-	}
-
-	return all
-}
-
 // Get queries data
-func (ep *EncodePath) Get(ID int) (Params, error) {
+func (ep *Path) Get(ID int) (Params, error) {
 
 	ep.lock.RLock()
 
@@ -197,10 +220,24 @@ func (ep *EncodePath) Get(ID int) (Params, error) {
 	return saved, nil
 }
 
-// isWorkerAlloc find if a worker is alloc
-func isWorkerAlloc(inUse map[int]driver.Worker, w driver.Worker) int {
+// GetWorkers gets all workers registered under a path
+func (ep *Path) GetWorkers() []string {
 
-	for k, exist := range inUse {
+	ep.lock.RLock()
+
+	defer ep.lock.RUnlock()
+
+	var all []string
+	for _, w := range ep.workers {
+		all = append(all, driver.GetWorkerName(w))
+	}
+
+	return all
+}
+
+// isWorkerAlloc find if a worker is alloc
+func (ep *Path) isWorkerAlloc(w driver.Worker) int {
+	for k, exist := range ep.inUse {
 		if exist == w {
 			return k
 		}

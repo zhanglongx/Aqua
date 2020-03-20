@@ -58,7 +58,6 @@ var (
 const (
 	PipeRTSPIN = iota
 	PipeEncoder
-	PipeDecoder
 )
 
 // Pipes global service
@@ -68,11 +67,9 @@ var Pipes [3]*PipeSvr
 func init() {
 	Pipes[PipeRTSPIN] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 0}
 	Pipes[PipeEncoder] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 1000}
-	Pipes[PipeDecoder] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 2000}
 
 	Pipes[PipeRTSPIN].Create()
 	Pipes[PipeEncoder].Create()
-	Pipes[PipeDecoder].Create()
 }
 
 // GetWorkerName get Worker's Name
