@@ -5,8 +5,10 @@
 
 package main
 
-import "fmt"
+import (
+	_ "github.com/zhanglongx/Aqua/web"
+)
 
 func main() {
-	fmt.Printf("Hello\n")
+
 }
