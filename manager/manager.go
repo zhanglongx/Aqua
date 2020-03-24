@@ -31,7 +31,7 @@ type Path struct {
 	// inUse holds all in use driver.Worker
 	inUse map[int]driver.Worker
 
-	// workers store all sub-card's workers
+	// workers store all workers can be assigned
 	workers Workers
 }
 
@@ -114,7 +114,6 @@ func (ep *Path) Set(ID int, params Params) error {
 				return err
 			}
 
-			// hack: double free to be sure pipe.Pull is freed anyway
 			pipe = driver.Pipes[driver.PipeEncoder]
 			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
 				return err
