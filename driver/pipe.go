@@ -156,7 +156,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		if exists == w {
 			return nil
 		}
-		// TODO re-do
+		// TODO: un-do
 	}
 
 	ses := Session{IP: sr.IP,
