@@ -135,7 +135,7 @@ func (ep *Path) Set(ID int, params Params) error {
 	}
 
 	// RTSP
-	if params["RtspIn"].(string) != "" {
+	if params["RtspIn"] != nil {
 		// hack: if it's a rtsp worker
 		if driver.IsWorkerDec(w) {
 			rtsp := ep.workers.findWorker("rtsp_254_0")
