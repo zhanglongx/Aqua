@@ -29,7 +29,7 @@ type PipeSvr struct {
 	all map[int]*Pipe
 }
 
-// Pipe is pipeline shared between workers
+// Pipe contains pipeline info used by PipeSvr
 type Pipe struct {
 	inPorts []int
 
@@ -159,8 +159,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		// TODO: un-do
 	}
 
-	ses := Session{IP: sr.IP,
-		Ports: p.inPorts}
+	ses := Session{IP: sr.IP, Ports: p.inPorts}
 
 	if err := SetEncodeSes(w, &ses); err != nil {
 		return err

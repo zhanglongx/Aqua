@@ -16,6 +16,12 @@ import (
 	"github.com/zhanglongx/Aqua/manager"
 )
 
+var appCfg = struct {
+	IsPipeOn bool
+}{
+	IsPipeOn: true,
+}
+
 // M is shortcut for map
 type M map[string]interface{}
 
@@ -29,7 +35,12 @@ func init() {
 
 	http.HandleFunc("/", pathIdx)
 
+	if appCfg.IsPipeOn {
+		http.HandleFunc("/Pipe", pipeIdx)
+	}
+
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+
 }
 
 func pathIdx(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +70,10 @@ func pathIdx(w http.ResponseWriter, r *http.Request) {
 	data["Content"] = content
 
 	execTpl(w, data, pathTpl)
+}
+
+func pipeIdx(w http.ResponseWriter, r *http.Request) {
+	manager.GetPipeInfo(w)
 }
 
 func setWrapper(val url.Values) error {

@@ -9,7 +9,6 @@ package manager
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -251,9 +250,7 @@ func (ep *Path) isWorkerAlloc(w driver.Worker) int {
 // GetPipeInfo return a Pipesvr's info
 func GetPipeInfo(w io.Writer) {
 	for k := range []int{driver.PipeRTSPIN, driver.PipeEncoder} {
-		for kk, p := range driver.Pipes[k].GetInfo() {
-
-			w.Write([]byte(fmt.Sprintf("%d\n", kk)))
+		for _, p := range driver.Pipes[k].GetInfo() {
 
 			tree := treeprint.New()
 			var str string
