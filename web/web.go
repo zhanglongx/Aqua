@@ -19,11 +19,13 @@ import (
 var appCfg = struct {
 	epDir  string
 	epFile string
+	epNeed []string
 
 	isHTTPPipeOn bool
 }{
 	epDir:  "testdata",
 	epFile: "test1.json",
+	epNeed: []string{"local_encoder"},
 
 	isHTTPPipeOn: true,
 }
@@ -35,7 +37,7 @@ var ep = &manager.EPath
 
 func init() {
 
-	if err := ep.Create(appCfg.epDir, appCfg.epFile); err != nil {
+	if err := ep.Create(appCfg.epDir, appCfg.epFile, appCfg.epNeed); err != nil {
 		comm.Error.Panicf("Create EncodePath failed")
 	}
 

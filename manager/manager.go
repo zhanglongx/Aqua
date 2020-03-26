@@ -48,13 +48,13 @@ var (
 var EPath Path = Path{}
 
 // Create does registing, and loads cfg from file
-func (ep *Path) Create(dir string, file string) error {
+func (ep *Path) Create(dir string, file string, need []string) error {
 
 	ep.inUse = make(map[int]driver.Worker)
 
 	// tempz: receive from Parameters
 	ep.workers = Workers{}
-	if err := ep.workers.register(); err != nil {
+	if err := ep.workers.register(need); err != nil {
 		return err
 	}
 
