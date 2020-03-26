@@ -48,7 +48,7 @@ var (
 var EPath Path = Path{}
 
 // Create does registing, and loads cfg from file
-func (ep *Path) Create(DBFile string) error {
+func (ep *Path) Create(dir string, file string) error {
 
 	ep.inUse = make(map[int]driver.Worker)
 
@@ -59,7 +59,7 @@ func (ep *Path) Create(DBFile string) error {
 	}
 
 	ep.db.create()
-	if err := ep.db.loadFromFile(DBFile); err != nil {
+	if err := ep.db.loadFromFile(dir, file); err != nil {
 		return err
 	}
 

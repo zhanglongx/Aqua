@@ -18,7 +18,7 @@ func TestDB_loadFromFile(t *testing.T) {
 
 	db.create()
 
-	if err := db.loadFromFile("../testdata/test1.json"); err != nil {
+	if err := db.loadFromFile("../testdata/", "test1.json"); err != nil {
 		return
 	}
 

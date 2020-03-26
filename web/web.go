@@ -17,9 +17,15 @@ import (
 )
 
 var appCfg = struct {
-	IsPipeOn bool
+	epDir  string
+	epFile string
+
+	IsHTTPPipeOn bool
 }{
-	IsPipeOn: true,
+	epDir:  "testdata",
+	epFile: "test1.json",
+
+	IsHTTPPipeOn: true,
 }
 
 // M is shortcut for map
@@ -29,13 +35,13 @@ var ep = &manager.EPath
 
 func init() {
 
-	if err := ep.Create("testdata/test1.json"); err != nil {
+	if err := ep.Create(appCfg.epDir, appCfg.epFile); err != nil {
 		comm.Error.Panicf("Create EncodePath failed")
 	}
 
 	http.HandleFunc("/", pathIdx)
 
-	if appCfg.IsPipeOn {
+	if appCfg.IsHTTPPipeOn {
 		http.HandleFunc("/Pipe", pipeIdx)
 	}
 
