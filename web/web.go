@@ -20,12 +20,12 @@ var appCfg = struct {
 	epDir  string
 	epFile string
 
-	IsHTTPPipeOn bool
+	isHTTPPipeOn bool
 }{
 	epDir:  "testdata",
 	epFile: "test1.json",
 
-	IsHTTPPipeOn: true,
+	isHTTPPipeOn: true,
 }
 
 // M is shortcut for map
@@ -39,14 +39,17 @@ func init() {
 		comm.Error.Panicf("Create EncodePath failed")
 	}
 
+	startAPP()
+}
+
+func startAPP() {
 	http.HandleFunc("/", pathIdx)
 
-	if appCfg.IsHTTPPipeOn {
+	if appCfg.isHTTPPipeOn {
 		http.HandleFunc("/Pipe", pipeIdx)
 	}
 
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
-
 }
 
 func pathIdx(w http.ResponseWriter, r *http.Request) {
