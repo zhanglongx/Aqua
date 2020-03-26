@@ -26,19 +26,19 @@ type PipeSvr struct {
 	// Prefix to identity services
 	Prefix int
 
-	all map[int]*pipe
+	all map[int]*Pipe
 }
 
-// pipe is pipeline shared between workers
-type pipe struct {
+// Pipe is pipeline shared between workers
+type Pipe struct {
 	inPorts []int
 
 	outIP []net.IP
 
 	outPorts [][]int
 
-	inWorkers  Worker
-	outWorkers []Worker
+	InWorkers  Worker
+	OutWorkers []Worker
 }
 
 // Session is src or dst for workers
@@ -58,19 +58,19 @@ func helperPort(base int, prefix int, id int) []int {
 
 // Create a svr
 func (sr *PipeSvr) Create() {
-	sr.all = make(map[int]*pipe)
+	sr.all = make(map[int]*Pipe)
 }
 
 // AllocPull alloc one pull
 func (sr *PipeSvr) AllocPull(id int, w Worker) error {
-	var p *pipe
+	var p *Pipe
 
 	sr.lock.Lock()
 
 	defer sr.lock.Unlock()
 
 	if p = sr.all[id]; p == nil {
-		p = &pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
 		sr.all[id] = p
 	}
 
@@ -78,7 +78,7 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 		return errNodeBadInput
 	}
 
-	for _, exists := range p.outWorkers {
+	for _, exists := range p.OutWorkers {
 		if exists == w {
 			return nil
 		}
@@ -94,14 +94,14 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 
 	// TODO: start here
 
-	p.outWorkers = append(p.outWorkers, w)
+	p.OutWorkers = append(p.OutWorkers, w)
 
 	return nil
 }
 
 // FreePull free one pull
 func (sr *PipeSvr) FreePull(id int, w Worker) error {
-	var p *pipe
+	var p *Pipe
 
 	sr.lock.Lock()
 
@@ -117,7 +117,7 @@ func (sr *PipeSvr) FreePull(id int, w Worker) error {
 
 	var k int
 	var exists Worker
-	for k, exists = range p.outWorkers {
+	for k, exists = range p.OutWorkers {
 		if exists == w {
 			break
 		}
@@ -129,7 +129,7 @@ func (sr *PipeSvr) FreePull(id int, w Worker) error {
 
 	// TODO: free here
 
-	p.outWorkers = remove(p.outWorkers, k)
+	p.OutWorkers = remove(p.OutWorkers, k)
 
 	return nil
 }
@@ -141,10 +141,10 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 
 	defer sr.lock.Unlock()
 
-	var p *pipe
+	var p *Pipe
 
 	if p = sr.all[id]; p == nil {
-		p = &pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
 		sr.all[id] = p
 	}
 
@@ -152,7 +152,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		return errNodeBadInput
 	}
 
-	if exists := p.inWorkers; exists != nil {
+	if exists := p.InWorkers; exists != nil {
 		if exists == w {
 			return nil
 		}
@@ -168,7 +168,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 
 	// TODO: push here
 
-	p.inWorkers = w
+	p.InWorkers = w
 
 	return nil
 }
@@ -180,7 +180,7 @@ func (sr *PipeSvr) FreePush(id int) error {
 
 	defer sr.lock.Unlock()
 
-	var p *pipe
+	var p *Pipe
 
 	if p = sr.all[id]; p == nil {
 		return nil
@@ -188,9 +188,29 @@ func (sr *PipeSvr) FreePush(id int) error {
 
 	// TODO: free here
 
-	p.inWorkers = nil
+	p.InWorkers = nil
 
 	return nil
+}
+
+// GetInfo print tree-like string
+func (sr *PipeSvr) GetInfo() []Pipe {
+
+	sr.lock.Lock()
+
+	defer sr.lock.Unlock()
+
+	var out []Pipe
+
+	for _, p := range sr.all {
+		if p.InWorkers == nil && len(p.OutWorkers) == 0 {
+			continue
+		}
+
+		out = append(out, *p)
+	}
+
+	return out
 }
 
 // https://yourbasic.org/golang/delete-element-slice/

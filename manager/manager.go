@@ -9,10 +9,13 @@ package manager
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"sync"
 
+	"github.com/xlab/treeprint"
 	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/driver"
 )
@@ -243,6 +246,33 @@ func (ep *Path) isWorkerAlloc(w driver.Worker) int {
 	}
 
 	return -1
+}
+
+// GetPipeInfo return a Pipesvr's info
+func GetPipeInfo(w io.Writer) {
+	for k := range []int{driver.PipeRTSPIN, driver.PipeEncoder} {
+		for kk, p := range driver.Pipes[k].GetInfo() {
+
+			w.Write([]byte(fmt.Sprintf("%d\n", kk)))
+
+			tree := treeprint.New()
+			var str string
+			if p.InWorkers == nil {
+				str = ""
+			} else {
+				str = driver.GetWorkerName(p.InWorkers)
+			}
+			node := tree.AddNode(str)
+
+			for _, o := range p.OutWorkers {
+				if o != nil {
+					node.AddNode(driver.GetWorkerName(o))
+				}
+			}
+
+			w.Write([]byte(tree.String()))
+		}
+	}
 }
 
 func isPathValid(ID int) bool {
