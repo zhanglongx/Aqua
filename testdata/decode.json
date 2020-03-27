@@ -1,0 +1,13 @@
+{
+    "Version": "1.0.0",
+    "Params": {
+        "1": {
+            "IsRunning": false,
+            "WorkerName": "local_decoder_0_0"
+        },
+        "2": {
+            "IsRunning": false,
+            "WorkerName": "local_decoder_0_1"
+        }
+    }
+}

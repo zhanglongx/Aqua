@@ -21,11 +21,19 @@ var appCfg = struct {
 	epFile string
 	epNeed []string
 
+	dpDir  string
+	dpFile string
+	dpNeed []string
+
 	isHTTPPipeOn bool
 }{
 	epDir:  "testdata",
-	epFile: "test1.json",
+	epFile: "encode.json",
 	epNeed: []string{"local_encoder"},
+
+	dpDir:  "testdata",
+	dpFile: "decode.json",
+	dpNeed: []string{"local_decoder"},
 
 	isHTTPPipeOn: true,
 }
@@ -33,7 +41,11 @@ var appCfg = struct {
 // M is shortcut for map
 type M map[string]interface{}
 
-var ep = &manager.EPath
+// pointers to Path
+var (
+	ep = &manager.EPath
+	dp = &manager.DPath
+)
 
 func init() {
 
@@ -41,11 +53,16 @@ func init() {
 		comm.Error.Panicf("Create EncodePath failed")
 	}
 
+	if err := dp.Create(appCfg.dpDir, appCfg.dpFile, appCfg.dpNeed); err != nil {
+		comm.Error.Panicf("Create DecodePath failed")
+	}
+
 	startAPP()
 }
 
 func startAPP() {
-	http.HandleFunc("/", pathIdx)
+	http.HandleFunc("/", encodeIdx)
+	http.HandleFunc("/decode", decodeIdx)
 
 	if appCfg.isHTTPPipeOn {
 		http.HandleFunc("/Pipe", pipeIdx)
@@ -54,14 +71,15 @@ func startAPP() {
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
-func pathIdx(w http.ResponseWriter, r *http.Request) {
+// TODO: to make a unified idx
+func encodeIdx(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	IDStr := r.Form.Get("ID")
 	set := r.Form.Get("set")
 
 	var allErr []error
 	if set == "设置参数" {
-		if err := setWrapper(r.Form); err != nil {
+		if err := setEP(r.Form); err != nil {
 			allErr = append(allErr, err)
 		}
 	}
@@ -70,7 +88,7 @@ func pathIdx(w http.ResponseWriter, r *http.Request) {
 
 	var content M
 	var err error
-	if content, err = getWrapper(IDStr); err != nil {
+	if content, err = getEP(IDStr); err != nil {
 		allErr = append(allErr, err)
 	}
 
@@ -80,14 +98,43 @@ func pathIdx(w http.ResponseWriter, r *http.Request) {
 
 	data["Content"] = content
 
-	execTpl(w, data, pathTpl)
+	execTpl(w, data, epTpl)
+}
+
+func decodeIdx(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	IDStr := r.Form.Get("ID")
+	set := r.Form.Get("set")
+
+	var allErr []error
+	if set == "设置参数" {
+		if err := setDP(r.Form); err != nil {
+			allErr = append(allErr, err)
+		}
+	}
+
+	data := make(map[interface{}]interface{})
+
+	var content M
+	var err error
+	if content, err = getDP(IDStr); err != nil {
+		allErr = append(allErr, err)
+	}
+
+	if len(allErr) > 0 {
+		content["Error"] = allErr
+	}
+
+	data["Content"] = content
+
+	execTpl(w, data, dpTpl)
 }
 
 func pipeIdx(w http.ResponseWriter, r *http.Request) {
 	manager.GetPipeInfo(w)
 }
 
-func setWrapper(val url.Values) error {
+func setEP(val url.Values) error {
 
 	IDStr := val.Get("ID")
 
@@ -117,7 +164,7 @@ func setWrapper(val url.Values) error {
 	return nil
 }
 
-func getWrapper(IDStr string) (M, error) {
+func getEP(IDStr string) (M, error) {
 
 	content := make(M)
 
@@ -148,6 +195,63 @@ func getWrapper(IDStr string) (M, error) {
 		params["WorkerName"].(string))
 	content["RTSPIn"] = params["RTSPIn"]
 	content["BitRate"] = params["BitRate"]
+	content["IsRunning"] = params["IsRunning"]
+
+	return content, nil
+}
+
+func setDP(val url.Values) error {
+
+	IDStr := val.Get("ID")
+
+	if IDStr == "" {
+		return nil
+	}
+
+	id, _ := strconv.Atoi(IDStr)
+
+	// FIXME: more checks?
+	params := make(manager.Params)
+	params["WorkerName"] = val.Get("WorkerName")
+	if val.Get("IsRunning") == "1" {
+		params["IsRunning"] = true
+	} else {
+		params["IsRunning"] = false
+	}
+
+	if err := dp.Set(id, params); err != nil {
+		comm.Error.Printf("Set path %d failed", id)
+		return err
+	}
+
+	return nil
+}
+
+func getDP(IDStr string) (M, error) {
+
+	content := make(M)
+
+	// default
+	content["ID"] = []int{1, 2, 3, 4}
+	content["WorkerName"] = dp.GetWorkers()
+	content["IsRunning"] = false
+
+	if IDStr == "" {
+		return content, nil
+	}
+
+	id, _ := strconv.Atoi(IDStr)
+
+	var params manager.Params
+	var err error
+	if params, err = dp.Get(id); err != nil {
+		comm.Error.Printf("Get path %d failed", id)
+		return content, err
+	}
+
+	content["ID"] = selectInt(content["ID"].([]int), id)
+	content["WorkerName"] = selectStr(content["WorkerName"].([]string),
+		params["WorkerName"].(string))
 	content["IsRunning"] = params["IsRunning"]
 
 	return content, nil

@@ -91,7 +91,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			return nil
 		}
 
-		fmt.Printf("Waiting for closing VLC manually")
+		fmt.Printf("Waiting for closing VLC manually\n")
 		if err := w.cmd.Wait(); err != nil {
 			comm.Error.Printf("vlc exit with error")
 			return err

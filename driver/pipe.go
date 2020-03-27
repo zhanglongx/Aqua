@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	inBasePort  = 6000
+	inBasePort  = 5000
 	outBasePort = 6000
 )
 
@@ -70,7 +70,7 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 	defer sr.lock.Unlock()
 
 	if p = sr.all[id]; p == nil {
-		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)} // tempz
 		sr.all[id] = p
 	}
 
@@ -87,7 +87,7 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 	wid := GetWorkerWorkerID(w)
 	// IP := GetWorkerWorkerIP(w)
 
-	ses := Session{Ports: helperPort(outBasePort, sr.Prefix, wid)}
+	ses := Session{Ports: helperPort(outBasePort, 0, wid)}
 	if err := SetDecodeSes(w, &ses); err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 	var p *Pipe
 
 	if p = sr.all[id]; p == nil {
-		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id)}
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)} // tempz
 		sr.all[id] = p
 	}
 

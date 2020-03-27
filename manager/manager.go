@@ -44,8 +44,11 @@ var (
 	errWorkerInUse     = errors.New("Worker in Use")
 )
 
-// EPath is the instance of EncoderPath
-var EPath Path = Path{}
+// instances of path
+var (
+	EPath Path = Path{}
+	DPath Path = Path{}
+)
 
 // Create does registing, and loads cfg from file
 func (ep *Path) Create(dir string, file string, need []string) error {
@@ -259,7 +262,7 @@ func GetPipeInfo(w io.Writer) {
 			} else {
 				str = driver.GetWorkerName(p.InWorkers)
 			}
-			node := tree.AddNode(str)
+			node := tree.AddBranch(str)
 
 			for _, o := range p.OutWorkers {
 				if o != nil {

@@ -1,0 +1,19 @@
+{
+    "Version": "1.0.0",
+    "Params": {
+        "1": {
+            "BitRate": 0,
+            "IsRunning": false,
+            "PathName": "高清编码器0",
+            "RTSPIn": "",
+            "WorkerName": "local_encoder_0_0"
+        },
+        "2": {
+            "BitRate": 0,
+            "IsRunning": false,
+            "PathName": "高清编码器1",
+            "RTSPIn": "",
+            "WorkerName": "local_encoder_0_1"
+        }
+    }
+}
