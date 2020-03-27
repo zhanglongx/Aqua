@@ -61,7 +61,7 @@ func init() {
 }
 
 func startAPP() {
-	http.HandleFunc("/", encodeIdx)
+	http.HandleFunc("/encode", encodeIdx)
 	http.HandleFunc("/decode", decodeIdx)
 
 	if appCfg.isHTTPPipeOn {
