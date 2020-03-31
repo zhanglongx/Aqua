@@ -63,10 +63,17 @@ const (
 // Pipes global service
 var Pipes [3]*PipeSvr
 
+var transitSvr transit
+
 // Init create PipeSvr
 func init() {
-	Pipes[PipeRTSPIN] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 0}
-	Pipes[PipeEncoder] = &PipeSvr{IP: net.IPv4(192, 165, 53, 35), Prefix: 1000}
+
+	CfgTransit := comm.AppCfg.TransitSvr
+
+	transitSvr = transit{selfIP: CfgTransit}
+
+	Pipes[PipeRTSPIN] = &PipeSvr{IP: CfgTransit, Prefix: 0}
+	Pipes[PipeEncoder] = &PipeSvr{IP: CfgTransit, Prefix: 1000}
 
 	Pipes[PipeRTSPIN].Create()
 	Pipes[PipeEncoder].Create()

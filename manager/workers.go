@@ -31,6 +31,7 @@ var (
 // register accept sub-card's register
 func (ws *Workers) register(need []string) error {
 
+	// tempz
 	var cards []regInfo = []regInfo{
 		{0, "local_encoder", net.IPv4(192, 165, 56, 35)},
 		{0, "local_decoder", net.IPv4(192, 165, 56, 35)},

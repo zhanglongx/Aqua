@@ -16,28 +16,6 @@ import (
 	"github.com/zhanglongx/Aqua/manager"
 )
 
-var appCfg = struct {
-	epDir  string
-	epFile string
-	epNeed []string
-
-	dpDir  string
-	dpFile string
-	dpNeed []string
-
-	isHTTPPipeOn bool
-}{
-	epDir:  "testdata",
-	epFile: "encode.json",
-	epNeed: []string{"local_encoder"},
-
-	dpDir:  "testdata",
-	dpFile: "decode.json",
-	dpNeed: []string{"local_decoder"},
-
-	isHTTPPipeOn: true,
-}
-
 // M is shortcut for map
 type M map[string]interface{}
 
@@ -49,11 +27,13 @@ var (
 
 func init() {
 
-	if err := ep.Create(appCfg.epDir, appCfg.epFile, appCfg.epNeed); err != nil {
+	if err := ep.Create(comm.AppCfg.EPDir, comm.AppCfg.EPFile,
+		comm.AppCfg.EPNeed); err != nil {
 		comm.Error.Panicf("Create EncodePath failed")
 	}
 
-	if err := dp.Create(appCfg.dpDir, appCfg.dpFile, appCfg.dpNeed); err != nil {
+	if err := dp.Create(comm.AppCfg.DPDir, comm.AppCfg.DPFile,
+		comm.AppCfg.DPNeed); err != nil {
 		comm.Error.Panicf("Create DecodePath failed")
 	}
 
@@ -64,7 +44,7 @@ func startAPP() {
 	http.HandleFunc("/encode", encodeIdx)
 	http.HandleFunc("/decode", decodeIdx)
 
-	if appCfg.isHTTPPipeOn {
+	if comm.AppCfg.IsHTTPPipeOn {
 		http.HandleFunc("/Pipe", pipeIdx)
 	}
 
