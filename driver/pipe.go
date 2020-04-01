@@ -85,14 +85,16 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 	}
 
 	wid := GetWorkerWorkerID(w)
-	// IP := GetWorkerWorkerIP(w)
+	IP := GetWorkerWorkerIP(w)
 
 	ses := Session{Ports: helperPort(outBasePort, 0, wid)}
 	if err := SetDecodeSes(w, &ses); err != nil {
 		return err
 	}
 
-	// TODO: start here
+	if err := transitSvr.add(p.inPorts[0], IP, ses.Ports[0], true); err != nil {
+		return err
+	}
 
 	p.OutWorkers = append(p.OutWorkers, w)
 
@@ -127,7 +129,13 @@ func (sr *PipeSvr) FreePull(id int, w Worker) error {
 		return nil
 	}
 
-	// TODO: free here
+	wid := GetWorkerWorkerID(w)
+	IP := GetWorkerWorkerIP(w)
+
+	if err := transitSvr.del(p.inPorts[0], IP,
+		helperPort(outBasePort, 0, wid)[0], true); err != nil {
+		return err
+	}
 
 	p.OutWorkers = remove(p.OutWorkers, k)
 
@@ -156,7 +164,17 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		if exists == w {
 			return nil
 		}
-		// TODO: un-do
+
+		// TODO: un-do ?
+
+		// FIXME: hacks to stop exists
+		ses := Session{IP: sr.IP, Ports: []int{60000, 60002}}
+
+		if err := SetEncodeSes(w, &ses); err != nil {
+			return err
+		}
+
+		p.InWorkers = nil
 	}
 
 	ses := Session{IP: sr.IP, Ports: p.inPorts}
@@ -164,8 +182,6 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 	if err := SetEncodeSes(w, &ses); err != nil {
 		return err
 	}
-
-	// TODO: push here
 
 	p.InWorkers = w
 
@@ -185,7 +201,14 @@ func (sr *PipeSvr) FreePush(id int) error {
 		return nil
 	}
 
-	// TODO: free here
+	// TODO: un-do?
+
+	// FIXME: hacks to stop exists
+	ses := Session{IP: sr.IP, Ports: []int{60000, 60002}}
+
+	if err := SetEncodeSes(p.InWorkers, &ses); err != nil {
+		return err
+	}
 
 	p.InWorkers = nil
 

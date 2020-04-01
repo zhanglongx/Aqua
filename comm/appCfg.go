@@ -21,7 +21,7 @@ var AppCfg = struct {
 
 	IsHTTPPipeOn bool
 }{
-	TransitSvr: net.IPv4(192, 165, 53, 35),
+	TransitSvr: net.IPv4(10, 1, 41, 153),
 
 	EPDir:  "testdata",
 	EPFile: "encode.json",

@@ -107,8 +107,8 @@ func (ep *Path) Set(ID int, params Params) error {
 
 	if exists := ep.inUse[ID]; exists != nil {
 		// un-do
-		// FIXME: only true in EncodePath
 		if driver.IsWorkerDec(exists) {
+			// FIXME: only true in EncodePath
 			pipe := driver.Pipes[driver.PipeRTSPIN]
 			if err := pipe.FreePush(ID); err != nil {
 				return err
@@ -175,16 +175,6 @@ func (ep *Path) Set(ID int, params Params) error {
 		if err := pipe.AllocPush(ID, w); err != nil {
 			return err
 		}
-
-		// TODO: rtspOut
-		// rtsp := ep.workers.findWorker("rtsp_255_0")
-		// if rtsp == nil {
-		// 	return errWorkerNotExists
-		// }
-
-		// if err := pipe.AllocPull(ID, rtsp); err != nil {
-		// 	return err
-		// }
 	}
 
 	ep.inUse[ID] = w
