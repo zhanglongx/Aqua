@@ -17,7 +17,7 @@ import (
 const LocalEncoderName string = "local_encoder"
 
 const vlcExe = "c:\\Program Files\\VideoLAN\\VLC\\vlc.exe"
-const soutTpl = "#transcode{vcodec=h264,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=localhost,port=%d}"
+const soutTpl = "#transcode{vcodec=h264,vb=300,acodec=mpga,ab=128,channels=2,samplerate=44100,scodec=none}:rtp{dst=%s,port=%d}"
 
 // LocalE is the main struct for sub-card
 type LocalE struct {
@@ -39,6 +39,7 @@ type LocalEWorker struct {
 
 	cmd *exec.Cmd
 
+	dst  net.IP
 	port [2]int
 }
 
@@ -74,7 +75,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 			return nil
 		}
 
-		sout := fmt.Sprintf(soutTpl, w.port[0])
+		sout := fmt.Sprintf(soutTpl, w.dst, w.port[0])
 
 		w.cmd = exec.Command(vlcExe,
 			"d:\\Streams\\D1_1M_9330.ts",
@@ -120,6 +121,7 @@ func (w *LocalEWorker) Control(c CtlCmd) interface{} {
 // Encode method
 func (w *LocalEWorker) Encode(sess *Session) error {
 
+	w.dst = sess.IP
 	w.port[0] = sess.Ports[0]
 	return nil
 }

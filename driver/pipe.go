@@ -52,6 +52,8 @@ var (
 	errNodeBadInput = errors.New("Bad input for node")
 )
 
+var invalidPorts = []int{60000, 60002}
+
 func helperPort(base int, prefix int, id int) []int {
 	return []int{base + prefix + 4*id, base + prefix + 4*id + 2}
 }
@@ -168,7 +170,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		// TODO: un-do ?
 
 		// FIXME: hacks to stop exists
-		ses := Session{IP: sr.IP, Ports: []int{60000, 60002}}
+		ses := Session{IP: sr.IP, Ports: invalidPorts}
 
 		if err := SetEncodeSes(w, &ses); err != nil {
 			return err
@@ -204,7 +206,7 @@ func (sr *PipeSvr) FreePush(id int) error {
 	// TODO: un-do?
 
 	// FIXME: hacks to stop exists
-	ses := Session{IP: sr.IP, Ports: []int{60000, 60002}}
+	ses := Session{IP: sr.IP, Ports: invalidPorts}
 
 	if err := SetEncodeSes(p.InWorkers, &ses); err != nil {
 		return err

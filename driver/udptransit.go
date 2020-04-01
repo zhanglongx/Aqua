@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	transURL = "http://localhost/goform/form_data"
+	transURL = "http://10.1.41.153/goform/form_data" //tempz
 )
 
 var (
@@ -48,14 +48,13 @@ func (t *transit) add(srcPort int, dstIP net.IP, dstPort int,
 	transponds := make([]map[string]interface{}, num)
 	for i := 0; i < num; i++ {
 
-		transponds[0] = make(map[string]interface{})
+		transponds[i] = make(map[string]interface{})
 
-		transponds[0]["type"] = "udp2udp"
-		transponds[0]["recv_ip"] = fmt.Sprintf("%s", t.selfIP)
-		transponds[0]["recv_port"] = srcPort + 2*i
-		transponds[0]["send_ip"] = fmt.Sprintf("%s", dstIP)
-		transponds[0]["send_port"] = dstPort + 2*i
-
+		transponds[i]["type"] = "udp2udp"
+		transponds[i]["recv_ip"] = fmt.Sprintf("%s", t.selfIP)
+		transponds[i]["recv_port"] = srcPort + 2*i
+		transponds[i]["send_ip"] = fmt.Sprintf("%s", dstIP)
+		transponds[i]["send_port"] = dstPort + 2*i
 	}
 
 	args := make(map[string]interface{})
@@ -80,9 +79,10 @@ func (t *transit) add(srcPort int, dstIP net.IP, dstPort int,
 		return err
 	}
 
-	if reply["status"] != "Established" {
-		return errTransitGeneric
-	}
+	// tempz
+	// if reply["status"] != "Established" {
+	// 	return errTransitGeneric
+	// }
 
 	return nil
 }
@@ -102,14 +102,13 @@ func (t *transit) del(srcPort int, dstIP net.IP, dstPort int,
 	transponds := make([]map[string]interface{}, num)
 	for i := 0; i < num; i++ {
 
-		transponds[0] = make(map[string]interface{})
+		transponds[i] = make(map[string]interface{})
 
-		transponds[0]["type"] = "udp2udp"
-		transponds[0]["recv_ip"] = fmt.Sprintf("%s", t.selfIP)
-		transponds[0]["recv_port"] = srcPort + 2*i
-		transponds[0]["send_ip"] = fmt.Sprintf("%s", dstIP)
-		transponds[0]["send_port"] = dstPort + 2*i
-
+		transponds[i]["type"] = "udp2udp"
+		transponds[i]["recv_ip"] = fmt.Sprintf("%s", t.selfIP)
+		transponds[i]["recv_port"] = srcPort + 2*i
+		transponds[i]["send_ip"] = fmt.Sprintf("%s", dstIP)
+		transponds[i]["send_port"] = dstPort + 2*i
 	}
 
 	args := make(map[string]interface{})
@@ -134,9 +133,10 @@ func (t *transit) del(srcPort int, dstIP net.IP, dstPort int,
 		return err
 	}
 
-	if reply["status"] != "Deleted" {
-		return errTransitGeneric
-	}
+	// tempz
+	// if reply["status"] != "Deleted" {
+	// 	return errTransitGeneric
+	// }
 
 	return nil
 }

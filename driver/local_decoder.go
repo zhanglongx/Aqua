@@ -71,7 +71,7 @@ func (w *LocalDWorker) Control(c CtlCmd) interface{} {
 			return nil
 		}
 
-		url := fmt.Sprintf("rtp://localhost:%d", w.port[0])
+		url := fmt.Sprintf("rtp://:%d", w.port[0])
 
 		w.cmd = exec.Command(vlcExe, url)
 		if err := w.cmd.Start(); err != nil {
