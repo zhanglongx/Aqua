@@ -9,6 +9,8 @@ import "net"
 
 // AppCfg is the global configurations of Aqua
 var AppCfg = struct {
+	HW string
+
 	TransitSvr net.IP
 
 	EPDir  string
@@ -21,6 +23,8 @@ var AppCfg = struct {
 
 	IsHTTPPipeOn bool
 }{
+	HW: "以太网",
+
 	TransitSvr: net.IPv4(10, 1, 41, 153),
 
 	EPDir:  "testdata",

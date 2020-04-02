@@ -10,6 +10,16 @@ import (
 	"os"
 )
 
+// NetCfgInst is the instance of NetCfg
+var NetCfgInst NetCfg
+
+func init() {
+	NetCfgInst.Name = AppCfg.HW
+	if err := NetCfgInst.Init(); err != nil {
+		panic("NetCfg Init failed")
+	}
+}
+
 // Info is log[Info] output
 var Info = log.New(os.Stderr, "INFO: ",
 	log.Ldate|log.Ltime|log.Lshortfile)
