@@ -168,7 +168,6 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		}
 
 		// TODO: un-do ?
-
 		// FIXME: hacks to stop exists
 		ses := Session{IP: sr.IP, Ports: invalidPorts}
 
@@ -203,8 +202,11 @@ func (sr *PipeSvr) FreePush(id int) error {
 		return nil
 	}
 
-	// TODO: un-do?
+	if p.InWorkers == nil {
+		return nil
+	}
 
+	// TODO: un-do?
 	// FIXME: hacks to stop exists
 	ses := Session{IP: sr.IP, Ports: invalidPorts}
 
