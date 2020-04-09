@@ -25,7 +25,7 @@ var AppCfg = struct {
 }{
 	HW: "以太网",
 
-	TransitSvr: net.IPv4(10, 1, 41, 153),
+	TransitSvr: net.IPv4(10, 1, 41, 152),
 
 	EPDir:  "testdata",
 	EPFile: "encode.json",

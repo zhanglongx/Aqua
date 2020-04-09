@@ -6,9 +6,12 @@
 package manager
 
 import (
+	"bytes"
 	"errors"
 	"net"
+	"net/http"
 
+	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/driver"
 )
@@ -31,11 +34,14 @@ var (
 // register accept sub-card's register
 func (ws *Workers) register(need []string) error {
 
-	// tempz
-	var cards []regInfo = []regInfo{
-		{0, "local_encoder", net.IPv4(192, 165, 53, 35)},
-		{0, "local_decoder", net.IPv4(192, 165, 53, 35)},
+	var cards []regInfo
+	var err error
+	if cards, err = onlineCards(); err != nil {
+		return err
 	}
+
+	cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35)})
+	cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35)})
 
 	// FIXME: should be shared between path
 	alloced := make(map[int]bool)
@@ -97,4 +103,44 @@ func (ws *Workers) findWorker(name string) driver.Worker {
 	}
 
 	return nil
+}
+
+func onlineCards() ([]regInfo, error) {
+
+	args := make(map[string]interface{})
+	args["cards"] = [0]int{}
+
+	var message []byte
+	var err error
+	if message, err = json2.EncodeClientRequest("register_server.query", args); err != nil {
+		comm.Error.Panicf("%v", err)
+	}
+
+	var resp *http.Response
+	if resp, err = http.Post(driver.TransURL, "application/json", bytes.NewReader(message)); err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	reply := make(map[string]interface{})
+	err = json2.DecodeClientResponse(resp.Body, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []regInfo
+
+	var v interface{}
+	for _, v = range reply["cards"].([]interface{}) {
+		name := v.(map[string]interface{})["name"].(string)
+		slot := int(v.(map[string]interface{})["slot"].(float64))
+
+		cpus := v.(map[string]interface{})["cpus"].([]interface{})[0]
+		ip := net.ParseIP(cpus.(map[string]interface{})["ip"].(string))
+
+		result = append(result, regInfo{slot: slot, name: name, ip: ip})
+	}
+
+	return result, nil
 }

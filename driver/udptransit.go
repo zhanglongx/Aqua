@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	transURL = "http://10.1.41.153/goform/form_data" //tempz
+	TransURL = "http://10.1.41.152/goform/form_data" //tempz
 )
 
 var (
@@ -67,7 +67,7 @@ func (t *transit) add(srcPort int, dstIP net.IP, dstPort int,
 	}
 
 	var resp *http.Response
-	if resp, err = http.Post(transURL, "application/json", bytes.NewReader(message)); err != nil {
+	if resp, err = http.Post(TransURL, "application/json", bytes.NewReader(message)); err != nil {
 		return err
 	}
 
@@ -121,7 +121,7 @@ func (t *transit) del(srcPort int, dstIP net.IP, dstPort int,
 	}
 
 	var resp *http.Response
-	if resp, err = http.Post(transURL, "application/json", bytes.NewReader(message)); err != nil {
+	if resp, err = http.Post(TransURL, "application/json", bytes.NewReader(message)); err != nil {
 		return err
 	}
 
