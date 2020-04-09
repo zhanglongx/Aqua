@@ -239,7 +239,7 @@ func (ep *Path) isWorkerAlloc(w driver.Worker) int {
 	return -1
 }
 
-// GetPipeInfo return a Pipesvr's info
+// GetPipeInfo return a Pipesvr info
 func GetPipeInfo(w io.Writer) {
 	for k := range []int{driver.PipeRTSPIN, driver.PipeEncoder} {
 		for _, p := range driver.Pipes[k].GetInfo() {
