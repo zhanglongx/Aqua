@@ -16,22 +16,22 @@ func Test(t *testing.T) {
 		},
 	}
 
-	setMap(test1, 0, "data", 20)
+	helperSetMap(test1, 0, "data", 20)
 	if test1["root"].(map[string]interface{})["data"] != 20 {
 		t.Error("failed: ", test1)
 	}
 
-	setMap(test1, 0, "data1", 100)
+	helperSetMap(test1, 0, "data1", 100)
 	if test1["root"].(map[string]interface{})["data"] != 20 {
 		t.Error("failed: ", test1)
 	}
 
-	setMap(test1, 0, "root", 100)
+	helperSetMap(test1, 0, "root", 100)
 	if test1["root"].(int) != 100 {
 		t.Error("failed: ", test1)
 	}
 
-	setMap(nil, 0, "data", 100)
+	helperSetMap(nil, 0, "data", 100)
 
 	test2 := map[string]interface{}{
 		"root": map[string]interface{}{
@@ -49,7 +49,7 @@ func Test(t *testing.T) {
 
 	var ss []map[string]interface{}
 
-	setMap(test2, 0, "sdata", 100)
+	helperSetMap(test2, 0, "sdata", 100)
 	ss = test2["root"].(map[string]interface{})["slice"].([]map[string]interface{})
 	if ss[0]["sdata"] != 100 {
 		t.Error("failed: ", test2)
@@ -58,6 +58,6 @@ func Test(t *testing.T) {
 		t.Error("failed: ", test2)
 	}
 
-	setMap(test2, 100, "sdata", 100)
-	setMap(test2, 100, "", 100)
+	helperSetMap(test2, 100, "sdata", 100)
+	helperSetMap(test2, 100, "", 100)
 }

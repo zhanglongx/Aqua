@@ -62,9 +62,13 @@ func (ws *Workers) register(need []string) error {
 		var card driver.Card
 		switch found.name {
 		case driver.LocalEncoderName:
-			card = &driver.LocalE{}
+			card = &driver.LocalE{Slot: found.slot,
+				IP: found.ip,
+			}
 		case driver.LocalDecoderName:
-			card = &driver.LocalD{}
+			card = &driver.LocalD{Slot: found.slot,
+				IP: found.ip,
+			}
 		default:
 			comm.Error.Printf("Unknown card type %s", found.name)
 			continue
@@ -78,7 +82,7 @@ func (ws *Workers) register(need []string) error {
 			continue
 		}
 
-		if w, err := card.Open(found.slot, found.ip); err == nil {
+		if w, err := card.Open(); err == nil {
 			*ws = append(*ws, w...)
 			alloced[found.slot] = true
 		} else {

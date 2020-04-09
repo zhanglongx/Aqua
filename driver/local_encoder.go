@@ -44,20 +44,15 @@ type LocalEWorker struct {
 }
 
 // Open method
-func (l *LocalE) Open(s int, IP net.IP) ([]Worker, error) {
-	card := LocalE{
-		Slot: s,
-		IP:   IP,
-	}
-
+func (l *LocalE) Open() ([]Worker, error) {
 	return []Worker{
 		&LocalEWorker{
 			workerID: 0,
-			card:     &card,
+			card:     l,
 		},
 		&LocalEWorker{
 			workerID: 1,
-			card:     &card,
+			card:     l,
 		},
 	}, nil
 }

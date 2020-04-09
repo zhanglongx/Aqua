@@ -36,6 +36,9 @@ const DummyName string = "Dummy"
 
 // Dummy is the main struct for sub-card
 type Dummy struct {
+	Slot int
+
+	IP net.IP
 }
 
 // DummyWorker is the main struct for sub-card's Worker
@@ -55,11 +58,11 @@ type DummyWorker struct {
 // to sub-card, and perform necessary communication with
 // it, as querying the hardware version or working path
 // in sub-card
-func (d *Dummy) Open(s int, IP net.IP) ([]Worker, error) {
+func (d *Dummy) Open() ([]Worker, error) {
 	var w *DummyWorker = &DummyWorker{
-		Slot:     s,
+		Slot:     d.Slot,
 		WorkerID: 0,
-		IP:       IP,
+		IP:       d.IP,
 	}
 
 	comm.Info.Printf("Open %s successfully", DummyName)

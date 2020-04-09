@@ -40,20 +40,15 @@ type LocalDWorker struct {
 }
 
 // Open method
-func (l *LocalD) Open(s int, IP net.IP) ([]Worker, error) {
-	card := LocalD{
-		Slot: s,
-		IP:   IP,
-	}
-
+func (l *LocalD) Open() ([]Worker, error) {
 	return []Worker{
 		&LocalDWorker{
 			workerID: 0,
-			card:     &card,
+			card:     l,
 		},
 		&LocalDWorker{
 			workerID: 1,
-			card:     &card,
+			card:     l,
 		},
 	}, nil
 }
