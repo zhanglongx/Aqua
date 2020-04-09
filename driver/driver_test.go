@@ -59,5 +59,8 @@ func Test(t *testing.T) {
 	}
 
 	helperSetMap(test2, 100, "sdata", 100)
-	helperSetMap(test2, 100, "", 100)
+	helperSetMap(test2, 1, "", 100)
+	if test2["root"].(map[string]interface{})["data"] != 1 {
+		t.Error("failed: ", test2)
+	}
 }

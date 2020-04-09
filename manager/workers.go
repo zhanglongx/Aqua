@@ -6,12 +6,9 @@
 package manager
 
 import (
-	"bytes"
 	"errors"
 	"net"
-	"net/http"
 
-	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/driver"
 )
@@ -111,25 +108,11 @@ func (ws *Workers) findWorker(name string) driver.Worker {
 
 func onlineCards() ([]regInfo, error) {
 
-	args := make(map[string]interface{})
-	args["cards"] = [0]int{}
-
-	var message []byte
+	var reply map[string]interface{}
 	var err error
-	if message, err = json2.EncodeClientRequest("register_server.query", args); err != nil {
-		comm.Error.Panicf("%v", err)
-	}
 
-	var resp *http.Response
-	if resp, err = http.Post(driver.TransURL, "application/json", bytes.NewReader(message)); err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	reply := make(map[string]interface{})
-	err = json2.DecodeClientResponse(resp.Body, &reply)
-	if err != nil {
+	if reply, err = driver.RPC(driver.TransURL,
+		"register_server.query", [0]int{}); err != nil {
 		return nil, err
 	}
 

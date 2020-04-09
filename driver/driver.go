@@ -8,9 +8,12 @@
 package driver
 
 import (
+	"bytes"
 	"errors"
 	"net"
+	"net/http"
 
+	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
 )
 
@@ -160,6 +163,31 @@ func IsWorkerEnc(w Worker) bool {
 	}
 
 	return false
+}
+
+// RPC wrappers JSON-rpc queries
+func RPC(url string, cmd string, args interface{}) (map[string]interface{}, error) {
+
+	var message []byte
+	var err error
+	if message, err = json2.EncodeClientRequest(cmd, args); err != nil {
+		comm.Error.Panicf("%v", err)
+	}
+
+	var resp *http.Response
+	if resp, err = http.Post(url, "application/json", bytes.NewReader(message)); err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	reply := make(map[string]interface{})
+	err = json2.DecodeClientResponse(resp.Body, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	return reply, nil
 }
 
 func helperSetMap(m map[string]interface{}, index int, key string, v interface{}) {
