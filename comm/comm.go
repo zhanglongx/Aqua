@@ -31,19 +31,3 @@ var Warning = log.New(os.Stderr, "WARNING: ",
 // Error is log[Error] output
 var Error = log.New(os.Stderr, "ERROR: ",
 	log.Ldate|log.Ltime|log.Lshortfile)
-
-func setMap(m map[string]interface{}, index int, key string, v interface{}) {
-	if _, ok := m[key]; ok {
-		m[key] = v
-	}
-
-	for k := range m {
-		if c, ok := m[k].(map[string]interface{}); ok {
-			setMap(c, index, key, v)
-		} else if c, ok := m[k].([]map[string]interface{}); ok {
-			if index < len(c) {
-				setMap(c[index], index, key, v)
-			}
-		}
-	}
-}
