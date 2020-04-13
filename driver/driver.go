@@ -23,7 +23,6 @@ const (
 	CtlCmdStop
 	CtlCmdName
 	CtlCmdIP
-	CtlCmdSlot
 	CtlCmdWorkerID
 )
 

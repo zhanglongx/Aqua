@@ -108,11 +108,13 @@ func (ws *Workers) findWorker(name string) driver.Worker {
 
 func onlineCards() ([]regInfo, error) {
 
+	args := map[string]interface{}{"cards": [0]int{}}
+
 	var reply map[string]interface{}
 	var err error
 
 	if reply, err = driver.RPC(driver.TransURL,
-		"register_server.query", [0]int{}); err != nil {
+		"register_server.query", args); err != nil {
 		return nil, err
 	}
 

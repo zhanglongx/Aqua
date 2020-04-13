@@ -96,9 +96,6 @@ func (w *LocalDWorker) Control(c CtlCmd) interface{} {
 	case CtlCmdIP:
 		return w.card.IP
 
-	case CtlCmdSlot:
-		return w.card.Slot
-
 	case CtlCmdWorkerID:
 		return w.workerID
 
