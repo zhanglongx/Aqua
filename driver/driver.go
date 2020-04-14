@@ -127,9 +127,9 @@ func SetWorkerRunning(w Worker, r bool) error {
 }
 
 // SetEncodeSes set Session to Encoder
-func SetEncodeSes(w Worker, pi *Session) error {
+func SetEncodeSes(w Worker, sess *Session) error {
 	if w, ok := w.(Encoder); ok {
-		return w.Encode(pi)
+		return w.Encode(sess)
 	}
 
 	comm.Error.Fatalf("Worker implements Encoder incorrectly")
@@ -137,9 +137,9 @@ func SetEncodeSes(w Worker, pi *Session) error {
 }
 
 // SetDecodeSes set Session to Decode
-func SetDecodeSes(w Worker, pi *Session) error {
+func SetDecodeSes(w Worker, sess *Session) error {
 	if w, ok := w.(Decoder); ok {
-		return w.Decode(pi)
+		return w.Decode(sess)
 	}
 
 	comm.Error.Fatalf("Worker implements Decoder incorrectly")
@@ -189,6 +189,9 @@ func RPC(url string, cmd string, args interface{}) (map[string]interface{}, erro
 	return reply, nil
 }
 
+// helperSetMap lookup key in m, and change the value. If value is a slice, index
+// will be used. All keys with same name in sub-level will be changes.
+// TODO: return err if key not exist
 func helperSetMap(m map[string]interface{}, index int, key string, v interface{}) {
 	if _, ok := m[key]; ok {
 		m[key] = v
