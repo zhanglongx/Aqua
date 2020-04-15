@@ -22,6 +22,8 @@ type regInfo struct {
 	name string
 
 	ip net.IP
+
+	url string
 }
 
 var (
@@ -37,8 +39,8 @@ func (ws *Workers) register(need []string) error {
 		return err
 	}
 
-	cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35)})
-	cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35)})
+	cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35), ""})
+	cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35), ""})
 
 	// FIXME: should be shared between path
 	alloced := make(map[int]bool)
@@ -66,8 +68,13 @@ func (ws *Workers) register(need []string) error {
 			card = &driver.LocalD{Slot: found.slot,
 				IP: found.ip,
 			}
+		case driver.C9830TranscoderName:
+			card = &driver.C9830{Slot: found.slot,
+				IP:  found.ip,
+				URL: found.url,
+			}
 		default:
-			comm.Error.Printf("Unknown card type %s", found.name)
+			comm.Error.Printf("Unknown card: %s", found.name)
 			continue
 		}
 
@@ -128,7 +135,9 @@ func onlineCards() ([]regInfo, error) {
 		cpus := v.(map[string]interface{})["cpus"].([]interface{})[0]
 		ip := net.ParseIP(cpus.(map[string]interface{})["ip"].(string))
 
-		result = append(result, regInfo{slot: slot, name: name, ip: ip})
+		url := v.(map[string]interface{})["url"].(string)
+
+		result = append(result, regInfo{slot: slot, name: name, ip: ip, url: url})
 	}
 
 	return result, nil

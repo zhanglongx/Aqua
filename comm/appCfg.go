@@ -29,7 +29,7 @@ var AppCfg = struct {
 
 	EPDir:  "testdata",
 	EPFile: "encode.json",
-	EPNeed: []string{"local_encoder"},
+	EPNeed: []string{"C9830", "local_encoder"},
 
 	DPDir:  "testdata",
 	DPFile: "decode.json",

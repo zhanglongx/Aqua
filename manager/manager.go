@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"regexp"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -224,6 +225,8 @@ func (ep *Path) GetWorkers() []string {
 	for _, w := range ep.workers {
 		all = append(all, driver.GetWorkerName(w))
 	}
+
+	sort.Strings(all)
 
 	return all
 }
