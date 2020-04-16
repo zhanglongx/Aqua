@@ -51,7 +51,7 @@ func startAPP() {
 	log.Fatal(http.ListenAndServe("localhost:8000", nil))
 }
 
-// TODO: to make a unified idx
+// TODO: to make a unified idx func
 func encodeIdx(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	IDStr := r.Form.Get("ID")
