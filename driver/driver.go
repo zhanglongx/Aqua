@@ -63,7 +63,7 @@ const (
 )
 
 // Pipes global service
-var Pipes [3]*PipeSvr
+var Pipes [2]*PipeSvr
 
 var transitSvr transit
 

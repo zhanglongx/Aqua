@@ -109,17 +109,19 @@ func (ep *Path) Set(ID int, params Params) error {
 	if exists := ep.inUse[ID]; exists != nil {
 		// un-do
 		if driver.IsWorkerDec(exists) {
-			// FIXME: only true in EncodePath
-			pipe := driver.Pipes[driver.PipeRTSPIN]
-			if err := pipe.FreePush(ID); err != nil {
-				return err
+			// hack: only EncodePath has RTSPIn
+			if params["RTSPIn"] != nil {
+				pipe := driver.Pipes[driver.PipeRTSPIN]
+				if err := pipe.FreePush(ID); err != nil {
+					return err
+				}
+
+				if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
+					return err
+				}
 			}
 
-			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
-				return err
-			}
-
-			pipe = driver.Pipes[driver.PipeEncoder]
+			pipe := driver.Pipes[driver.PipeEncoder]
 			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
 				return err
 			}
