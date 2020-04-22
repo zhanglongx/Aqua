@@ -106,7 +106,7 @@ func (w *TCBinWorker) Control(c CtlCmd, arg interface{}) interface{} {
 		var settings map[string]interface{}
 		var ok bool
 		if settings, ok = arg.(map[string]interface{}); !ok {
-			return errBadImplement
+			return errTypeError
 		}
 
 		if _, ok = settings["rtsp_url"]; ok {
