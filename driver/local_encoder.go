@@ -63,7 +63,7 @@ func (l *LocalE) Close() error {
 }
 
 // Control method
-func (w *LocalEWorker) Control(c CtlCmd) interface{} {
+func (w *LocalEWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	switch c {
 	case CtlCmdStart:
 		if w.isRunning == true {

@@ -39,6 +39,7 @@ func (ws *Workers) register(need []string) error {
 		return err
 	}
 
+	// tempz
 	cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35), ""})
 	cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35), ""})
 

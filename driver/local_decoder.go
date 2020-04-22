@@ -59,7 +59,7 @@ func (l *LocalD) Close() error {
 }
 
 // Control method
-func (w *LocalDWorker) Control(c CtlCmd) interface{} {
+func (w *LocalDWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	switch c {
 	case CtlCmdStart:
 		if w.isRunning == true {

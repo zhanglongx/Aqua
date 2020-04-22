@@ -67,7 +67,7 @@ func (c *C9830) Close() error {
 }
 
 // Control method
-func (w *C9830Worker) Control(c CtlCmd) interface{} {
+func (w *C9830Worker) Control(c CtlCmd, arg interface{}) interface{} {
 	card := w.card
 
 	switch c {
@@ -96,6 +96,13 @@ func (w *C9830Worker) Control(c CtlCmd) interface{} {
 
 	case CtlCmdWorkerID:
 		return w.workerID
+
+	case CtlCmdSetting:
+		if settings, ok := arg.(map[string]interface{}); ok {
+			if err := card.set(w.workerID, settings); err != nil {
+				return err
+			}
+		}
 
 	default:
 	}
@@ -138,7 +145,7 @@ func (c *C9830) set(id int, settings map[string]interface{}) error {
 
 	var reply map[string]interface{}
 	var err error
-	if reply, err = RPC(c.URL, "decoder.set", c.rpc); err != nil {
+	if reply, err = RPC(c.URL, "transcoder.set", c.rpc); err != nil {
 		return err
 	}
 

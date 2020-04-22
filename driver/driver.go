@@ -24,6 +24,7 @@ const (
 	CtlCmdName
 	CtlCmdIP
 	CtlCmdWorkerID
+	CtlCmdSetting
 )
 
 // CtlCmd is ID style type for control()
@@ -37,7 +38,7 @@ type Card interface {
 
 // Worker defines generic operation
 type Worker interface {
-	Control(c CtlCmd) interface{}
+	Control(c CtlCmd, arg interface{}) interface{}
 }
 
 // Encoder defines Encoder family operation
@@ -54,6 +55,7 @@ type Decoder interface {
 
 var (
 	errBadImplement = errors.New("Bad Implement")
+	errKeyError     = errors.New("Key Error")
 )
 
 // Pipe ID
@@ -83,7 +85,7 @@ func init() {
 
 // GetWorkerName get Worker's Name
 func GetWorkerName(w Worker) string {
-	if n, ok := w.Control(CtlCmdName).(string); ok {
+	if n, ok := w.Control(CtlCmdName, nil).(string); ok {
 		return n
 	}
 
@@ -93,7 +95,7 @@ func GetWorkerName(w Worker) string {
 
 // GetWorkerWorkerID get Worker's Slot
 func GetWorkerWorkerID(w Worker) int {
-	if s, ok := w.Control(CtlCmdWorkerID).(int); ok {
+	if s, ok := w.Control(CtlCmdWorkerID, nil).(int); ok {
 		return s
 	}
 
@@ -103,7 +105,7 @@ func GetWorkerWorkerID(w Worker) int {
 
 // GetWorkerWorkerIP get Worker's Slot
 func GetWorkerWorkerIP(w Worker) net.IP {
-	if IP, ok := w.Control(CtlCmdIP).(net.IP); ok {
+	if IP, ok := w.Control(CtlCmdIP, nil).(net.IP); ok {
 		return IP
 	}
 
@@ -114,11 +116,11 @@ func GetWorkerWorkerIP(w Worker) net.IP {
 // SetWorkerRunning set Running status
 func SetWorkerRunning(w Worker, r bool) error {
 	if r {
-		if err, ok := w.Control(CtlCmdStart).(error); ok {
+		if err, ok := w.Control(CtlCmdStart, nil).(error); ok {
 			return err
 		}
 	} else {
-		if err, ok := w.Control(CtlCmdStop).(error); ok {
+		if err, ok := w.Control(CtlCmdStop, nil).(error); ok {
 			return err
 		}
 	}

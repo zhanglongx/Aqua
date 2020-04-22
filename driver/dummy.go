@@ -80,7 +80,7 @@ func (d *Dummy) Close() error {
 // Control do quering and setting, like querying version,
 // setting paramenters. Return nil if ont all CtlCmd is
 // supported
-func (w *DummyWorker) Control(c CtlCmd) interface{} {
+func (w *DummyWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	switch c {
 	case CtlCmdName:
 		return fmt.Sprintf("%s_%d_%d", LocalEncoderName, w.Slot, w.WorkerID)

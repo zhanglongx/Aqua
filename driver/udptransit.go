@@ -80,11 +80,6 @@ func (t *transit) add(srcPort int, dstIP net.IP, dstPort int,
 		return err
 	}
 
-	// tempz
-	// if reply["status"] != "Established" {
-	// 	return errTransitGeneric
-	// }
-
 	return nil
 }
 
@@ -133,11 +128,6 @@ func (t *transit) del(srcPort int, dstIP net.IP, dstPort int,
 	if err != nil {
 		return err
 	}
-
-	// tempz
-	// if reply["status"] != "Deleted" {
-	// 	return errTransitGeneric
-	// }
 
 	return nil
 }
