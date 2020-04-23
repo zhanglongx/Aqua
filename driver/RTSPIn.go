@@ -41,8 +41,8 @@ func newRPC() map[string]interface{} {
 
 	// tempz ip
 	return map[string]interface{}{
-		"transponds": []map[string]interface{}{
-			{
+		"transponds": []interface{}{
+			map[string]interface{}{
 				"type":     "udp2udp",
 				"rtsp_url": "",
 				"recv_ip":  "10.1.41.152",
@@ -117,8 +117,8 @@ func (w *RTSPInWorker) Control(c CtlCmd, arg interface{}) interface{} {
 func (w *RTSPInWorker) Encode(sess *Session) error {
 
 	settings := map[string]interface{}{
-		"send_ip":   sess.IP.String(),
-		"send_port": sess.Ports[0],
+		"send_ip": sess.IP.String(),
+		"video":   sess.Ports[0],
 	}
 
 	if err := w.set(w.workerID, settings); err != nil {
@@ -134,16 +134,16 @@ func (w *RTSPInWorker) set(id int, settings map[string]interface{}) error {
 	defer w.card.lock.Unlock()
 
 	for k := range settings {
-		helperSetMap(w.rpc, id, k, settings[k])
+		helperSetMap(w.rpc, 0, k, settings[k])
 	}
 
 	// hack: use ["rtsp_url"] to see if we can add
-	if w.rpc["transponds"].([]map[string]interface{})[0]["rtsp_url"].(string) == "" {
+	if w.rpc["transponds"].([]interface{})[0].(map[string]interface{})["rtsp_url"].(string) == "" {
 		return nil
 	}
 
-	var ok string
-	if err := RPC(w.card.URL, "rtsp_client.add", w.rpc, &ok); err != nil {
+	replay := make(map[string]interface{})
+	if err := RPC(w.card.URL, "rtsp_client.add", w.rpc, &replay); err != nil {
 		return err
 	}
 

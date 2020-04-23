@@ -34,12 +34,12 @@ func (b *TCBin) Open() ([]Worker, error) {
 	ws := []Worker{}
 	for id := range b.C9830Ws {
 		rtspWorker := b.RTSPWs[id]
-		if err := b.svr.AllocPush(id, rtspWorker); err != nil {
+		if err := b.svr.AllocPush(id+1, rtspWorker); err != nil {
 			return nil, err
 		}
 
 		C9830Worker := b.C9830Ws[id]
-		if err := b.svr.AllocPull(id, C9830Worker); err != nil {
+		if err := b.svr.AllocPull(id+1, C9830Worker); err != nil {
 			return nil, err
 		}
 
