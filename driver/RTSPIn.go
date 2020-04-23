@@ -138,17 +138,14 @@ func (w *RTSPInWorker) set(id int, settings map[string]interface{}) error {
 	}
 
 	// hack: use ["rtsp_url"] to see if we can add
-	if w.rpc["rtsp_url"] == "" {
+	if w.rpc["transponds"].([]map[string]interface{})[0]["rtsp_url"].(string) == "" {
 		return nil
 	}
 
-	var reply map[string]interface{}
-	var err error
-	if reply, err = RPC(w.card.URL, "rtsp_client.add", w.rpc); err != nil {
+	var ok string
+	if err := RPC(w.card.URL, "rtsp_client.add", w.rpc, &ok); err != nil {
 		return err
 	}
-
-	w.rpc = reply
 
 	return nil
 }

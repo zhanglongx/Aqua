@@ -119,10 +119,8 @@ func onlineCards() ([]regInfo, error) {
 	args := map[string]interface{}{"cards": [0]int{}}
 
 	var reply map[string]interface{}
-	var err error
-
-	if reply, err = driver.RPC(driver.TransURL,
-		"register_server.query", args); err != nil {
+	if err := driver.RPC(driver.TransURL,
+		"register_server.query", args, &reply); err != nil {
 		return nil, err
 	}
 

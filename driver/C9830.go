@@ -41,13 +41,10 @@ type C9830Worker struct {
 func (c *C9830) Open() ([]Worker, error) {
 	args := map[string]interface{}{}
 
-	var reply map[string]interface{}
-	var err error
-	if reply, err = RPC(c.URL, "transcoder.get", args); err != nil {
+	c.rpc = make(map[string]interface{})
+	if err := RPC(c.URL, "transcoder.get", args, &c.rpc); err != nil {
 		return nil, err
 	}
-
-	c.rpc = reply
 
 	return []Worker{
 		&C9830Worker{
@@ -143,13 +140,10 @@ func (c *C9830) set(id int, settings map[string]interface{}) error {
 		helperSetMap(c.rpc, id, k, settings[k])
 	}
 
-	var reply map[string]interface{}
-	var err error
-	if reply, err = RPC(c.URL, "transcoder.set", c.rpc); err != nil {
+	var ok string
+	if err := RPC(c.URL, "transcoder.set", c.rpc, &ok); err != nil {
 		return err
 	}
-
-	c.rpc = reply
 
 	return nil
 }

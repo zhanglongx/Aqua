@@ -129,6 +129,15 @@ func SetWorkerRunning(w Worker, r bool) error {
 	return nil
 }
 
+// SetWorkerSettings set Running status
+func SetWorkerSettings(w Worker, s map[string]interface{}) error {
+	if err, ok := w.Control(CtlCmdSetting, s).(error); ok {
+		return err
+	}
+
+	return nil
+}
+
 // SetEncodeSes set Session to Encoder
 func SetEncodeSes(w Worker, sess *Session) error {
 	if w, ok := w.(Encoder); ok {
@@ -168,7 +177,7 @@ func IsWorkerEnc(w Worker) bool {
 }
 
 // RPC wrappers JSON-rpc queries
-func RPC(url string, cmd string, args interface{}) (map[string]interface{}, error) {
+func RPC(url string, cmd string, args interface{}, reply interface{}) error {
 
 	var message []byte
 	var err error
@@ -178,18 +187,16 @@ func RPC(url string, cmd string, args interface{}) (map[string]interface{}, erro
 
 	var resp *http.Response
 	if resp, err = http.Post(url, "application/json", bytes.NewReader(message)); err != nil {
-		return nil, err
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	reply := make(map[string]interface{})
-	err = json2.DecodeClientResponse(resp.Body, &reply)
-	if err != nil {
-		return nil, err
+	if err = json2.DecodeClientResponse(resp.Body, reply); err != nil {
+		return err
 	}
 
-	return reply, nil
+	return nil
 }
 
 // helperSetMap lookup key in m, and change the value. If value is a slice, index
@@ -203,9 +210,11 @@ func helperSetMap(m map[string]interface{}, index int, key string, v interface{}
 	for k := range m {
 		if c, ok := m[k].(map[string]interface{}); ok {
 			helperSetMap(c, index, key, v)
-		} else if c, ok := m[k].([]map[string]interface{}); ok {
+		} else if c, ok := m[k].([]interface{}); ok {
 			if index < len(c) {
-				helperSetMap(c[index], index, key, v)
+				if cc, ok := c[index].(map[string]interface{}); ok {
+					helperSetMap(cc, index, key, v)
+				}
 			}
 		}
 	}
