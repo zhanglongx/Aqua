@@ -109,24 +109,10 @@ func (ep *Path) Set(ID int, params Params) error {
 	if exists := ep.inUse[ID]; exists != nil {
 		// un-do
 		if driver.IsWorkerDec(exists) {
-			// hack: only EncodePath has RTSPIn
-			if params["RTSPIn"] != nil {
-				pipe := driver.Pipes[driver.PipeRTSPIN]
-				if err := pipe.FreePush(ID); err != nil {
-					return err
-				}
-
-				if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
-					return err
-				}
-			}
-
 			pipe := driver.Pipes[driver.PipeEncoder]
 			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
 				return err
 			}
-
-			// FIXME: un-do RTSPIn ?
 		}
 
 		if driver.IsWorkerEnc(exists) {
@@ -141,35 +127,10 @@ func (ep *Path) Set(ID int, params Params) error {
 		ep.inUse[ID] = nil
 	}
 
-	// RTSP
-	if params["RtspIn"] != nil {
-		// hack: if it's a rtsp worker
-		if driver.IsWorkerDec(w) {
-			rtsp := ep.workers.findWorker("rtsp_254_0")
-			if rtsp == nil {
-				return errWorkerNotExists
-			}
-
-			// TODO: control rtsp in
-
-			pipe := driver.Pipes[driver.PipeRTSPIN]
-			if err := pipe.AllocPush(ID, rtsp); err != nil {
-				return err
-			}
-
-			if err := pipe.AllocPull(ID, w); err != nil {
-				return err
-			}
-		} else {
-			// TODO: rtsp direct in
-		}
-	} else {
-		// Inner
-		if driver.IsWorkerDec(w) {
-			pipe := driver.Pipes[driver.PipeEncoder]
-			if err := pipe.AllocPull(ID, w); err != nil {
-				return err
-			}
+	if driver.IsWorkerDec(w) {
+		pipe := driver.Pipes[driver.PipeEncoder]
+		if err := pipe.AllocPull(ID, w); err != nil {
+			return err
 		}
 	}
 
