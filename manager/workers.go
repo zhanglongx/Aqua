@@ -69,10 +69,19 @@ func (ws *Workers) register(need []string) error {
 			card = &driver.LocalD{Slot: found.slot,
 				IP: found.ip,
 			}
-		case driver.C9830TranscoderName:
-			card = &driver.C9830{Slot: found.slot,
+		case "C9830":
+			card9830 := &driver.C9830{Slot: found.slot,
 				IP:  found.ip,
 				URL: found.url,
+			}
+
+			cardRTSP := &driver.RTSPIn{Slot: 255,
+				IP:  net.IPv4(10, 1, 41, 152), // tempz
+				URL: "http://10.1.41.152/goform/form_data",
+			}
+
+			card = &driver.TCBin{Card9830: card9830,
+				CardRTSP: cardRTSP,
 			}
 		default:
 			comm.Error.Printf("Unknown card: %s", found.name)

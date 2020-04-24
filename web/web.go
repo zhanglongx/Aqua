@@ -128,13 +128,18 @@ func setEP(val url.Values) error {
 	params := make(manager.Params)
 	params["PathName"] = val.Get("PathName")
 	params["WorkerName"] = val.Get("WorkerName")
-	params["RTSPIn"] = val.Get("RTSPIn")
-	params["BitRate"], _ = strconv.Atoi(val.Get("BitRate"))
+
 	if val.Get("IsRunning") == "1" {
 		params["IsRunning"] = true
 	} else {
 		params["IsRunning"] = false
 	}
+
+	card := make(manager.Params)
+	card["rtsp_url"] = val.Get("rtsp_url")
+	card["BitRate"], _ = strconv.Atoi(val.Get("BitRate"))
+
+	params["Card"] = card
 
 	if err := ep.Set(id, params); err != nil {
 		comm.Error.Printf("Set path %d failed", id)
@@ -152,9 +157,13 @@ func getEP(IDStr string) (M, error) {
 	content["ID"] = []int{1, 2, 3, 4}
 	content["PathName"] = ""
 	content["WorkerName"] = ep.GetWorkers()
-	content["RTSPIn"] = ""
-	content["BitRate"] = 0
 	content["IsRunning"] = false
+
+	card := make(M)
+	card["rtsp_url"] = ""
+	card["BitRate"] = 0
+
+	content["Card"] = card
 
 	if IDStr == "" {
 		return content, nil
@@ -173,9 +182,9 @@ func getEP(IDStr string) (M, error) {
 	content["PathName"] = params["PathName"]
 	content["WorkerName"] = selectStr(content["WorkerName"].([]string),
 		params["WorkerName"].(string))
-	content["RTSPIn"] = params["RTSPIn"]
-	content["BitRate"] = params["BitRate"]
 	content["IsRunning"] = params["IsRunning"]
+
+	content["Card"] = params["Card"]
 
 	return content, nil
 }

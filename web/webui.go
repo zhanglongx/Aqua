@@ -58,6 +58,9 @@ var epTpl = `
 </select>
 <br></br>
 
+RTSP地址：
+<input type="text" name="rtsp_url" value={{.Content.Card.RTSPIn}}>
+
 是否启动：
 {{if eq .Content.IsRunning true}}
 	<input type="checkbox" name="IsRunning" value=1 checked>

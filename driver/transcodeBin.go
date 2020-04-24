@@ -13,8 +13,8 @@ type TCBin struct {
 	Card9830 Card
 	CardRTSP Card
 
-	C9830Ws []Worker
-	RTSPWs  []Worker
+	c9830Ws []Worker
+	rtspWs  []Worker
 
 	svr *PipeSvr
 }
@@ -31,14 +31,23 @@ type TCBinWorker struct {
 func (b *TCBin) Open() ([]Worker, error) {
 	b.svr = Pipes[PipeRTSPIN]
 
+	var err error
+	if b.c9830Ws, err = b.Card9830.Open(); err != nil {
+		return nil, err
+	}
+
+	if b.rtspWs, err = b.CardRTSP.Open(); err != nil {
+		return nil, err
+	}
+
 	ws := []Worker{}
-	for id := range b.C9830Ws {
-		rtspWorker := b.RTSPWs[id]
+	for id := range b.c9830Ws {
+		rtspWorker := b.rtspWs[id]
 		if err := b.svr.AllocPush(id+1, rtspWorker); err != nil {
 			return nil, err
 		}
 
-		C9830Worker := b.C9830Ws[id]
+		C9830Worker := b.c9830Ws[id]
 		if err := b.svr.AllocPull(id+1, C9830Worker); err != nil {
 			return nil, err
 		}
@@ -52,12 +61,12 @@ func (b *TCBin) Open() ([]Worker, error) {
 // Close method
 func (b *TCBin) Close() error {
 
-	for id := range b.C9830Ws {
+	for id := range b.c9830Ws {
 		if err := b.svr.FreePush(id); err != nil {
 			return err
 		}
 
-		C9830Worker := b.C9830Ws[id]
+		C9830Worker := b.c9830Ws[id]
 		if err := b.svr.FreePull(id, C9830Worker); err != nil {
 			return err
 		}
@@ -71,8 +80,8 @@ func (b *TCBin) Close() error {
 
 // Control method
 func (w *TCBinWorker) Control(c CtlCmd, arg interface{}) interface{} {
-	C9830Worker := w.bin.C9830Ws[w.workerID]
-	rtspWorker := w.bin.RTSPWs[w.workerID]
+	C9830Worker := w.bin.c9830Ws[w.workerID]
+	rtspWorker := w.bin.rtspWs[w.workerID]
 
 	switch c {
 	case CtlCmdStart:
@@ -125,7 +134,7 @@ func (w *TCBinWorker) Control(c CtlCmd, arg interface{}) interface{} {
 // Encode method
 func (w *TCBinWorker) Encode(sess *Session) error {
 
-	C9830Worker := w.bin.C9830Ws[w.workerID]
+	C9830Worker := w.bin.c9830Ws[w.workerID]
 	if err := SetEncodeSes(C9830Worker, sess); err != nil {
 		return err
 	}
