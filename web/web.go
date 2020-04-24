@@ -30,12 +30,12 @@ func StartAPP() {
 
 	if err := ep.Create(comm.AppCfg.EPDir, comm.AppCfg.EPFile,
 		comm.AppCfg.EPNeed); err != nil {
-		comm.Error.Panicf("Create EncodePath failed")
+		comm.Error.Panicf("Create EncodePath failed: %v", err)
 	}
 
 	if err := dp.Create(comm.AppCfg.DPDir, comm.AppCfg.DPFile,
 		comm.AppCfg.DPNeed); err != nil {
-		comm.Error.Panicf("Create DecodePath failed")
+		comm.Error.Panicf("Create DecodePath failed: %v", err)
 	}
 	http.HandleFunc("/encode", encodeIdx)
 	http.HandleFunc("/decode", decodeIdx)
