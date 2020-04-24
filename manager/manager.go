@@ -45,12 +45,6 @@ var (
 	errWorkerInUse     = errors.New("Worker in Use")
 )
 
-// instances of path
-var (
-	EPath Path = Path{}
-	DPath Path = Path{}
-)
-
 // Create does registing, and loads cfg from file
 func (ep *Path) Create(dir string, file string, need []string) error {
 

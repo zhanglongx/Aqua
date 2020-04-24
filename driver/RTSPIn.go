@@ -37,19 +37,16 @@ type RTSPInWorker struct {
 	rpc map[string]interface{}
 }
 
-func newRPC() map[string]interface{} {
+func newRPC(ip net.IP) map[string]interface{} {
 
-	// tempz ip
+	// XXX: RTSP shared the same IP with udp transit
 	return map[string]interface{}{
 		"transponds": []interface{}{
 			map[string]interface{}{
 				"type":     "udp2udp",
 				"rtsp_url": "",
-				"recv_ip":  "10.1.41.152",
-				"recv_port": map[string]interface{}{
-					"video": 0,
-					"audio": 0},
-				"send_ip": "10.1.41.152",
+				"recv_ip":  ip.String(),
+				"send_ip":  ip.String(),
 				"send_port": map[string]interface{}{
 					"video": 0,
 					"audio": 0},
@@ -65,12 +62,12 @@ func (c *RTSPIn) Open() ([]Worker, error) {
 		&RTSPInWorker{
 			workerID: 0,
 			card:     c,
-			rpc:      newRPC(),
+			rpc:      newRPC(c.IP),
 		},
 		&RTSPInWorker{
 			workerID: 1,
 			card:     c,
-			rpc:      newRPC(),
+			rpc:      newRPC(c.IP),
 		},
 	}, nil
 }
@@ -142,9 +139,13 @@ func (w *RTSPInWorker) set(id int, settings map[string]interface{}) error {
 		return nil
 	}
 
-	replay := make(map[string]interface{})
-	if err := RPC(w.card.URL, "rtsp_client.add", w.rpc, &replay); err != nil {
+	reply := make(map[string]interface{})
+	if err := RPC(w.card.URL, "rtsp_client.add", w.rpc, &reply); err != nil {
 		return err
+	}
+
+	if reply["transponds"].([]interface{})[0].(map[string]interface{})["status"].(string) != "Established" {
+		return errInputError
 	}
 
 	return nil

@@ -55,6 +55,7 @@ type Decoder interface {
 
 var (
 	errBadImplement = errors.New("Bad Implement")
+	errInputError   = errors.New("Input Error")
 	errTypeError    = errors.New("Type Error")
 	errKeyError     = errors.New("Key Error")
 )

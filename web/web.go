@@ -21,11 +21,12 @@ type M map[string]interface{}
 
 // pointers to Path
 var (
-	ep = &manager.EPath
-	dp = &manager.DPath
+	ep = &manager.Path{}
+	dp = &manager.Path{}
 )
 
-func init() {
+// StartAPP launch Web App
+func StartAPP() {
 
 	if err := ep.Create(comm.AppCfg.EPDir, comm.AppCfg.EPFile,
 		comm.AppCfg.EPNeed); err != nil {
@@ -36,11 +37,6 @@ func init() {
 		comm.AppCfg.DPNeed); err != nil {
 		comm.Error.Panicf("Create DecodePath failed")
 	}
-
-	startAPP()
-}
-
-func startAPP() {
 	http.HandleFunc("/encode", encodeIdx)
 	http.HandleFunc("/decode", decodeIdx)
 
