@@ -137,7 +137,7 @@ func (w *RTSPInWorker) set(id int, settings map[string]interface{}) error {
 		helperSetMap(w.rpc, 0, k, settings[k])
 	}
 
-	// hack: use ["rtsp_url"] to see if we can add
+	// hack: ["rtsp_url"] must be set
 	if w.rpc["transponds"].([]interface{})[0].(map[string]interface{})["rtsp_url"].(string) == "" {
 		return nil
 	}

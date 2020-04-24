@@ -146,6 +146,8 @@ func onlineCards() ([]regInfo, error) {
 		url := v.(map[string]interface{})["url"].(string)
 
 		result = append(result, regInfo{slot: slot, name: name, ip: ip, url: url})
+
+		comm.Info.Printf("Found %s ip: %s slot: %d", name, ip, slot)
 	}
 
 	return result, nil

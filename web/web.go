@@ -135,7 +135,7 @@ func setEP(val url.Values) error {
 		params["IsRunning"] = false
 	}
 
-	card := make(manager.Params)
+	card := make(map[string]interface{})
 	card["rtsp_url"] = val.Get("rtsp_url")
 	card["BitRate"], _ = strconv.Atoi(val.Get("BitRate"))
 

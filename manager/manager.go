@@ -143,7 +143,13 @@ func (ep *Path) Set(ID int, params Params) error {
 
 	ep.inUse[ID] = w
 
-	// TODO: apply params to Workers
+	if card, ok := params["Card"].(map[string]interface{}); ok {
+		if err := driver.SetWorkerSettings(w, card); err != nil {
+			return err
+		}
+	} else {
+		comm.Error.Printf("Param card format error")
+	}
 
 	isRunning := params["IsRunning"].(bool)
 	if err := driver.SetWorkerRunning(w, isRunning); err != nil {
