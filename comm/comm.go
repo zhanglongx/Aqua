@@ -15,7 +15,7 @@ var NetCfgInst NetCfg
 
 func init() {
 	NetCfgInst.Name = AppCfg.HW
-	if err := NetCfgInst.Init(); err != nil {
+	if err := NetCfgInst.create(); err != nil {
 		panic("NetCfg Init failed")
 	}
 }

@@ -18,8 +18,8 @@ type NetCfg struct {
 	ip net.IP
 }
 
-// Init reads Interfaces
-func (n *NetCfg) Init() error {
+// create reads Interfaces
+func (n *NetCfg) create() error {
 
 	i, err := net.InterfaceByName(n.Name)
 	if err != nil {

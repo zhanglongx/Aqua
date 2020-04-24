@@ -36,25 +36,25 @@ func Test(t *testing.T) {
 	test2 := map[string]interface{}{
 		"root": map[string]interface{}{
 			"data": 1,
-			"slice": []map[string]interface{}{
-				{
+			"slice": []interface{}{
+				map[string]interface{}{
 					"sdata": 1,
 				},
-				{
+				map[string]interface{}{
 					"sdata": 1,
 				},
 			},
 		},
 	}
 
-	var ss []map[string]interface{}
+	var ss []interface{}
 
 	helperSetMap(test2, 0, "sdata", 100)
-	ss = test2["root"].(map[string]interface{})["slice"].([]map[string]interface{})
-	if ss[0]["sdata"] != 100 {
+	ss = test2["root"].(map[string]interface{})["slice"].([]interface{})
+	if ss[0].(map[string]interface{})["sdata"] != 100 {
 		t.Error("failed: ", test2)
 	}
-	if ss[1]["sdata"] != 1 {
+	if ss[1].(map[string]interface{})["sdata"] != 1 {
 		t.Error("failed: ", test2)
 	}
 

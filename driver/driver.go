@@ -79,7 +79,7 @@ func init() {
 	transitSvr = transit{selfIP: CfgTransit}
 
 	Pipes[PipeRTSPIN] = &PipeSvr{IP: CfgTransit, Prefix: 0}
-	Pipes[PipeEncoder] = &PipeSvr{IP: CfgTransit, Prefix: 1000}
+	Pipes[PipeEncoder] = &PipeSvr{IP: CfgTransit, Prefix: 3000}
 
 	Pipes[PipeRTSPIN].Create()
 	Pipes[PipeEncoder].Create()
