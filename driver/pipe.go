@@ -71,8 +71,9 @@ func (sr *PipeSvr) AllocPull(id int, w Worker) error {
 
 	defer sr.lock.Unlock()
 
+	// XXX: id - 1 to start with zero
 	if p = sr.all[id]; p == nil {
-		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)} // tempz
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)}
 		sr.all[id] = p
 	}
 
@@ -153,8 +154,9 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 
 	var p *Pipe
 
+	// XXX: id - 1 to start with zero
 	if p = sr.all[id]; p == nil {
-		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)} // tempz
+		p = &Pipe{inPorts: helperPort(inBasePort, sr.Prefix, id-1)}
 		sr.all[id] = p
 	}
 
