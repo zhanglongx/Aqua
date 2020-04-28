@@ -173,7 +173,7 @@ func (sr *PipeSvr) AllocPush(id int, w Worker) error {
 		// FIXME: hacks to stop exists
 		ses := Session{IP: sr.IP, Ports: invalidPorts}
 
-		if err := SetEncodeSes(w, &ses); err != nil {
+		if err := SetEncodeSes(exists, &ses); err != nil {
 			return err
 		}
 
