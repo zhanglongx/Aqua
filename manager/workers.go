@@ -7,6 +7,7 @@ package manager
 
 import (
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/zhanglongx/Aqua/comm"
@@ -76,8 +77,8 @@ func (ws *Workers) register(need []string) error {
 			}
 
 			cardRTSP := &driver.RTSPIn{Slot: 255,
-				IP:  net.IPv4(10, 1, 41, 152), // tempz
-				URL: "http://10.1.41.152/goform/form_data",
+				IP:  comm.AppCfg.TransitSvr,
+				URL: fmt.Sprintf("http://%s/goform/form_data", comm.AppCfg.TransitSvr),
 			}
 
 			card = &driver.TCBin{Card9830: card9830,

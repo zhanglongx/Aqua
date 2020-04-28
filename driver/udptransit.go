@@ -18,8 +18,8 @@ import (
 )
 
 // TransURL stores url for transit
-const (
-	TransURL = "http://10.1.41.152/goform/form_data" //tempz
+var (
+	TransURL = fmt.Sprintf("http://%s/goform/form_data", comm.AppCfg.TransitSvr)
 )
 
 var (
