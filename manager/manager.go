@@ -104,7 +104,7 @@ func (ep *Path) Set(ID int, params Params) error {
 		// un-do
 		if driver.IsWorkerDec(exists) {
 			pipe := driver.Pipes[driver.PipeEncoder]
-			if err := pipe.FreePull(ID, ep.inUse[ID]); err != nil {
+			if err := pipe.FreePull(ID, exists); err != nil {
 				return err
 			}
 		}

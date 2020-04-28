@@ -59,5 +59,7 @@ func (n *NetCfg) SetIPv4(ip net.IP) error {
 
 	}
 
+	// TODO:
+
 	return nil
 }
