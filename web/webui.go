@@ -59,7 +59,7 @@ var epTpl = `
 <br></br>
 
 RTSP地址：
-<input type="text" name="rtsp_url" value={{.Content.Card.RTSPIn}}>
+<input type="text" name="rtsp_url" value={{.Content.Card.rtsp_url}}>
 <br></br>
 
 是否启动：

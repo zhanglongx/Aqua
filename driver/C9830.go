@@ -46,6 +46,16 @@ func (c *C9830) Open() ([]Worker, error) {
 		return nil, err
 	}
 
+	// set to default
+	for i := 0; i < 2; i++ {
+		helperSetMap(c.rpc, i, "recv_cast_mode", 0)
+	}
+
+	var ok string
+	if err := RPC(c.URL, "transcoder.set", c.rpc, &ok); err != nil {
+		return nil, err
+	}
+
 	return []Worker{
 		&C9830Worker{
 			workerID: 0,
