@@ -100,42 +100,44 @@ func (ep *Path) Set(ID int, params Params) error {
 		return errWorkerInUse
 	}
 
-	if exists := ep.inUse[ID]; exists != nil {
-		// un-do
-		if driver.IsWorkerDec(exists) {
+	if exists := ep.inUse[ID]; exists != w {
+		if exists != nil {
+			// un-do
+			if driver.IsWorkerDec(exists) {
+				pipe := driver.Pipes[driver.PipeEncoder]
+				if err := pipe.FreePull(ID, exists); err != nil {
+					return err
+				}
+			}
+
+			if driver.IsWorkerEnc(exists) {
+				pipe := driver.Pipes[driver.PipeEncoder]
+				if err := pipe.FreePush(ID); err != nil {
+					return err
+				}
+			}
+
+			// TODO: maybe more?
+
+			ep.inUse[ID] = nil
+		}
+
+		if driver.IsWorkerDec(w) {
 			pipe := driver.Pipes[driver.PipeEncoder]
-			if err := pipe.FreePull(ID, exists); err != nil {
+			if err := pipe.AllocPull(ID, w); err != nil {
 				return err
 			}
 		}
 
-		if driver.IsWorkerEnc(exists) {
+		if driver.IsWorkerEnc(w) {
 			pipe := driver.Pipes[driver.PipeEncoder]
-			if err := pipe.FreePush(ID); err != nil {
+			if err := pipe.AllocPush(ID, w); err != nil {
 				return err
 			}
 		}
 
-		// TODO: maybe more?
-
-		ep.inUse[ID] = nil
+		ep.inUse[ID] = w
 	}
-
-	if driver.IsWorkerDec(w) {
-		pipe := driver.Pipes[driver.PipeEncoder]
-		if err := pipe.AllocPull(ID, w); err != nil {
-			return err
-		}
-	}
-
-	if driver.IsWorkerEnc(w) {
-		pipe := driver.Pipes[driver.PipeEncoder]
-		if err := pipe.AllocPush(ID, w); err != nil {
-			return err
-		}
-	}
-
-	ep.inUse[ID] = w
 
 	if card, ok := params["Card"].(map[string]interface{}); ok {
 		if err := driver.SetWorkerSettings(w, card); err != nil {
