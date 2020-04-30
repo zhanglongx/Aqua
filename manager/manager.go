@@ -143,8 +143,6 @@ func (ep *Path) Set(ID int, params Params) error {
 		if err := driver.SetWorkerSettings(w, card); err != nil {
 			return err
 		}
-	} else {
-		comm.Error.Printf("Param card format error")
 	}
 
 	isRunning := params["IsRunning"].(bool)
