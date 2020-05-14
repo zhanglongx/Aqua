@@ -110,6 +110,11 @@ func (w *RTSPInWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	return nil
 }
 
+// Monitor .
+func (w *RTSPInWorker) Monitor() bool {
+	return true
+}
+
 // Encode method
 func (w *RTSPInWorker) Encode(sess *Session) error {
 

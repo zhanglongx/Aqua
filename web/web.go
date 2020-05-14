@@ -6,12 +6,17 @@
 package web
 
 import (
+	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
+	"time"
 
+	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
 	"github.com/zhanglongx/Aqua/manager"
 )
@@ -39,12 +44,59 @@ func StartAPP() {
 	}
 	http.HandleFunc("/encode", encodeIdx)
 	http.HandleFunc("/decode", decodeIdx)
+	http.HandleFunc("/goform/form_data", jsonrpcIdx)
 
 	if comm.AppCfg.IsHTTPPipeOn {
 		http.HandleFunc("/Pipe", pipeIdx)
 	}
 
-	log.Fatal(http.ListenAndServe("localhost:8000", nil))
+	stop := make(chan struct{}) // close(stop) will inform most goroutines to stop
+	fin := make(chan struct{})  // finish signal of `monitorStatus`
+
+	go monitorStatus(stop, fin, ep.GetWorkers())
+
+	log.Fatal(http.ListenAndServe("0.0.0.0:8000", nil))
+
+	close(stop) // inform goroutines to stop
+	<-fin       // wait for `monitorStatus` to stop
+}
+
+func monitorStatus(stop <-chan struct{}, fin chan<- struct{}, workers []string) {
+	defer func() { fin <- struct{}{} }()
+	var wg sync.WaitGroup
+
+	isStoped := func() bool {
+		select {
+		case <-stop: // when `stop` is closed, trigger this
+			return true
+		default:
+			return false
+		}
+	}
+
+	// get worker status every 2 seconds
+	queryStatus := func(workerName string, stop <-chan struct{}) {
+		defer wg.Done()
+		tick := time.NewTicker(2 * time.Second)
+		for {
+			if isStoped() {
+				break
+			}
+			select {
+			case <-tick.C:
+				ep.UpdateWorkerStatus(workerName)
+			}
+		}
+	}
+
+	// start `queryStatus` for each worker
+	for _, w := range workers {
+		wg.Add(1)
+		go queryStatus(w, stop)
+	}
+
+	// block until all queryStatus finish
+	wg.Wait()
 }
 
 // TODO: to make a unified idx func
@@ -108,6 +160,43 @@ func decodeIdx(w http.ResponseWriter, r *http.Request) {
 
 func pipeIdx(w http.ResponseWriter, r *http.Request) {
 	manager.GetPipeInfo(w)
+
+	fmt.Fprintf(w, "%v", ep.GetWorkerStatus())
+}
+
+// send jsonrpc to corresponding card and return response
+// send jsonrpc to http://[url]/goform/form_data?target=xx_x_x
+func jsonrpcIdx(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	codec := json2.NewCodec()
+	req := codec.NewRequest(r)
+
+	// get `target` worker from Get form
+	r.ParseForm()
+	target := r.Form.Get("target")
+
+	if target == "" {
+		//TODO? jsonrpc to this software
+		req.WriteError(w, 32000, fmt.Errorf("TODO? no target"))
+		return
+	}
+	ip := ep.GetWorkerIP(target)
+	if ip == nil {
+		req.WriteError(w, 32000, fmt.Errorf("no such worker"))
+		return
+	}
+
+	// send request body to card
+	url := fmt.Sprintf("http://%s/goform/form_data", ip)
+	resp, err := http.Post(url, "application/json", r.Body)
+	if err != nil {
+		req.WriteError(w, 32000, err)
+	}
+	defer resp.Body.Close()
+
+	// copy response to client
+	io.Copy(w, resp.Body)
 }
 
 func setEP(val url.Values) error {
@@ -205,7 +294,7 @@ func setDP(val url.Values) error {
 	}
 
 	if err := dp.Set(id, params); err != nil {
-		comm.Error.Printf("Set path %d failed", id)
+		comm.Error.Printf("Set path %d failed: %s", id, err)
 		return err
 	}
 

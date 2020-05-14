@@ -2,12 +2,12 @@
     "Version": "1.0.0",
     "Params": {
         "1": {
-            "IsRunning": false,
-            "WorkerName": "local_decoder_0_0"
+            "IsRunning": true,
+            "WorkerName": "C9820Dec_6_4"
         },
         "2": {
-            "IsRunning": false,
-            "WorkerName": "local_decoder_0_1"
+            "IsRunning": true,
+            "WorkerName": "9550Av3Dec_7_0"
         }
     }
 }

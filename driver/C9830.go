@@ -116,6 +116,35 @@ func (w *C9830Worker) Control(c CtlCmd, arg interface{}) interface{} {
 	return nil
 }
 
+// Monitor .
+func (w *C9830Worker) Monitor() bool {
+	params := map[string]interface{}{
+		"send": map[string]interface{}{
+			"bitrate": 0,
+		},
+	}
+	var reply interface{}
+	if err := RPC(w.card.URL, "encoder.get", params, &reply); err != nil {
+		return false
+	}
+	r, ok := reply.(map[string]interface{})
+	if !ok {
+		return false
+	}
+	s, ok := r["send"].(map[string]interface{})
+	if !ok {
+		return false
+	}
+	b, ok := s["bitrate"].(float64)
+	if !ok {
+		return false
+	}
+	if b <= 0 {
+		return false
+	}
+	return true
+}
+
 // Encode method
 func (w *C9830Worker) Encode(sess *Session) error {
 	settings := map[string]interface{}{

@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
@@ -39,6 +40,7 @@ type Card interface {
 // Worker defines generic operation
 type Worker interface {
 	Control(c CtlCmd, arg interface{}) interface{}
+	Monitor() bool
 }
 
 // Encoder defines Encoder family operation
@@ -219,4 +221,42 @@ func helperSetMap(m map[string]interface{}, index int, key string, v interface{}
 			}
 		}
 	}
+}
+
+// helperSetParam `m`: local params, `prefix`: pass "", `target`: target param
+// path like "[0].id"、".jsonrpc", `v`: if is not nil, will be set. return
+// corresponing value. If key does not exist, return nil. support []interface{}
+// and map[string]interface{}.
+// TODO: 1. wrap to avoid `prefix`; 2. check `v`: if set, `v` should be value,
+// path cannot point to array or map,
+func helperSetParam(m interface{}, prefix string, target string, v interface{}) interface{} {
+	oldPath := prefix
+	switch m.(type) {
+	case []interface{}:
+		mm := m.([]interface{})
+		for mi := range mm {
+			path := prefix + "[" + strconv.Itoa(mi) + "]"
+			if path == target && v != nil {
+				mm[mi] = v // TODO: illegal condition
+			}
+			if mvv := helperSetParam(mm[mi], path, target, v); mvv != nil {
+				return mvv
+			}
+		}
+	case map[string]interface{}:
+		mm := m.(map[string]interface{})
+		for mk := range mm {
+			path := prefix + "." + mk
+			if path == target && v != nil {
+				mm[mk] = v // TODO: illegal condition
+			}
+			if mvv := helperSetParam(mm[mk], path, target, v); mvv != nil {
+				return mvv
+			}
+		}
+	}
+	if target == oldPath {
+		return m
+	}
+	return nil
 }

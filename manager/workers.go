@@ -41,8 +41,14 @@ func (ws *Workers) register(need []string) error {
 	}
 
 	// tempz
-	cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35), ""})
-	cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35), ""})
+	// cards = append(cards, regInfo{32, "local_encoder", net.IPv4(192, 165, 53, 35), ""})
+	// cards = append(cards, regInfo{33, "local_decoder", net.IPv4(192, 165, 53, 35), ""})
+	// cards = append(cards, regInfo{5, "C9810", net.IPv4(10, 1, 41, 180), "http://10.1.41.180/goform/form_data"})
+	// cards = append(cards, regInfo{8, "C9811", net.IPv4(10, 1, 41, 180), "http://10.1.41.180/goform/form_data"})
+	cards = append(cards, regInfo{6, "C9820Dec", net.IPv4(10, 1, 41, 179), "http://10.1.41.179/goform/form_data"})
+	cards = append(cards, regInfo{6, "C9820Enc", net.IPv4(10, 1, 41, 179), "http://10.1.41.179/goform/form_data"})
+	cards = append(cards, regInfo{7, "9550Av3Dec", net.IPv4(10, 1, 41, 157), "http://10.1.41.157/goform/form_data"})
+	cards = append(cards, regInfo{7, "9550Av3Enc", net.IPv4(10, 1, 41, 157), "http://10.1.41.157/goform/form_data"})
 
 	// FIXME: should be shared between path
 	alloced := make(map[int]bool)
@@ -62,14 +68,17 @@ func (ws *Workers) register(need []string) error {
 
 		var card driver.Card
 		switch found.name {
+		// local encoder
 		case driver.LocalEncoderName:
 			card = &driver.LocalE{Slot: found.slot,
 				IP: found.ip,
 			}
+		// local decoder
 		case driver.LocalDecoderName:
 			card = &driver.LocalD{Slot: found.slot,
 				IP: found.ip,
 			}
+		// C9830: rtsp + C9830(transcoder)
 		case "C9830":
 			card9830 := &driver.C9830{Slot: found.slot,
 				IP:  found.ip,
@@ -84,6 +93,27 @@ func (ws *Workers) register(need []string) error {
 			card = &driver.TCBin{Card9830: card9830,
 				CardRTSP: cardRTSP,
 			}
+		// C9820Enc
+		case driver.C9820EncName:
+			card = &driver.C9820Enc{C9820: driver.C9820{Slot: found.slot, IP: found.ip, URL: found.url}}
+		// C9820Dec
+		case driver.C9820DecName:
+			card = &driver.C9820Dec{C9820: driver.C9820{Slot: found.slot, IP: found.ip, URL: found.url}}
+		// F1000: test fake encode card
+		case driver.F1000Name:
+			card = &driver.F1000{Slot: found.slot, IP: found.ip}
+		// F2000: test fake decode card
+		case driver.F2000Name:
+			card = &driver.F2000{Slot: found.slot, IP: found.ip}
+		// 9550Av3: encode channel
+		case driver.D9550Av3EncName:
+			card = &driver.D9550Av3Enc{Slot: found.slot, IP: found.ip, URL: found.url}
+		// 9550Av3: decode channel
+		case driver.D9550Av3DecName:
+			card = &driver.D9550Av3Dec{Slot: found.slot, IP: found.ip, URL: found.url}
+		// C9810: encode card
+		case driver.C9810Name, driver.C9811Name:
+			card = &driver.C981X{CardName: found.name, Slot: found.slot, IP: found.ip, URL: found.url}
 		default:
 			comm.Error.Printf("Unknown card: %s", found.name)
 			continue
@@ -101,7 +131,7 @@ func (ws *Workers) register(need []string) error {
 			*ws = append(*ws, w...)
 			alloced[found.slot] = true
 		} else {
-			comm.Error.Printf("Open card %s failed", found.name)
+			comm.Error.Printf("Open card %s failed: %s", found.name, err)
 		}
 	}
 

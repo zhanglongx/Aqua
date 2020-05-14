@@ -6,9 +6,10 @@
 package main
 
 import (
+	"github.com/zhanglongx/Aqua/web"
 	_ "github.com/zhanglongx/Aqua/web"
 )
 
 func main() {
-
+	web.StartAPP()
 }

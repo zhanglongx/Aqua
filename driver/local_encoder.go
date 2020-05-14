@@ -110,6 +110,11 @@ func (w *LocalEWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	return nil
 }
 
+// Monitor .
+func (w *LocalEWorker) Monitor() bool {
+	return true
+}
+
 // Encode method
 func (w *LocalEWorker) Encode(sess *Session) error {
 

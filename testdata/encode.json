@@ -2,18 +2,22 @@
     "Version": "1.0.0",
     "Params": {
         "1": {
-            "BitRate": 0,
-            "IsRunning": false,
-            "PathName": "高清编码器0",
-            "RTSPIn": "",
-            "WorkerName": "local_encoder_0_0"
+            "Card": {
+                "BitRate": 0,
+                "rtsp_url": ""
+            },
+            "IsRunning": true,
+            "PathName": "9550Av3Enc-\u003eC9820",
+            "WorkerName": "9550Av3Enc_7_0"
         },
         "2": {
-            "BitRate": 0,
-            "IsRunning": false,
-            "PathName": "高清编码器1",
-            "RTSPIn": "",
-            "WorkerName": "local_encoder_0_1"
+            "Card": {
+                "BitRate": 0,
+                "rtsp_url": ""
+            },
+            "IsRunning": true,
+            "PathName": "C9820-\u003e9550Av3Dec",
+            "WorkerName": "C9820Enc_6_9"
         }
     }
 }

@@ -23,17 +23,18 @@ var AppCfg = struct {
 
 	IsHTTPPipeOn bool
 }{
-	HW: "以太网",
+	HW: "ens33",
 
-	TransitSvr: net.IPv4(10, 1, 41, 152),
+	TransitSvr: net.IPv4(10, 1, 41, 150),
+	// TransitSvr: net.IPv4(192, 168, 17, 133),
 
 	EPDir:  "testdata",
 	EPFile: "encode.json",
-	EPNeed: []string{"C9830", "local_encoder"},
+	EPNeed: []string{"C9820Enc", "9550Av3Enc"},
 
 	DPDir:  "testdata",
 	DPFile: "decode.json",
-	DPNeed: []string{"local_decoder"},
+	DPNeed: []string{"C9820Dec", "9550Av3Dec"},
 
 	IsHTTPPipeOn: true,
 }

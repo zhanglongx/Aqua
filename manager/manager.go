@@ -10,6 +10,7 @@ package manager
 import (
 	"errors"
 	"io"
+	"net"
 	"regexp"
 	"sort"
 	"strconv"
@@ -36,6 +37,9 @@ type Path struct {
 
 	// workers store all workers can be assigned
 	workers Workers
+
+	// status contains status of workers
+	status map[string]bool
 }
 
 var (
@@ -49,6 +53,7 @@ var (
 func (ep *Path) Create(dir string, file string, need []string) error {
 
 	ep.inUse = make(map[int]driver.Worker)
+	ep.status = make(map[string]bool)
 
 	ep.workers = Workers{}
 	if err := ep.workers.register(need); err != nil {
@@ -194,6 +199,36 @@ func (ep *Path) GetWorkers() []string {
 	sort.Strings(all)
 
 	return all
+}
+
+// UpdateWorkerStatus call `Monitor()` to update worker status
+func (ep *Path) UpdateWorkerStatus(workerName string) {
+	ep.lock.Lock()
+	defer ep.lock.Unlock()
+
+	w := ep.workers.findWorker(workerName)
+
+	ep.status[workerName] = w.Monitor()
+}
+
+// GetWorkerIP get ip address corresponding to workername
+func (ep *Path) GetWorkerIP(workerName string) net.IP {
+	ep.lock.RLock()
+	defer ep.lock.RUnlock()
+
+	w := ep.workers.findWorker(workerName)
+	if w == nil {
+		return nil
+	}
+	return driver.GetWorkerWorkerIP(w)
+}
+
+// GetWorkerStatus return current worker status
+func (ep *Path) GetWorkerStatus() map[string]bool {
+	ep.lock.RLock()
+	defer ep.lock.RUnlock()
+
+	return ep.status
 }
 
 // isWorkerAlloc find if a worker is alloc
