@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/rpc/v2/json2"
@@ -57,6 +58,7 @@ type Decoder interface {
 
 // StatusMonitor struct for monitoring worker status
 type StatusMonitor struct {
+	sync.RWMutex
 	status bool
 	stop   chan struct{}
 	w      Worker
@@ -112,7 +114,9 @@ func (sm *StatusMonitor) updateMonitor() {
 		}
 		select {
 		case <-tick.C:
+			sm.Lock()
 			sm.status = sm.w.Monitor()
+			sm.Unlock()
 		}
 
 	}
@@ -132,6 +136,8 @@ func (sm *StatusMonitor) StopMonitor() {
 
 // GetStatus return current status
 func (sm *StatusMonitor) GetStatus() bool {
+	sm.RLock()
+	defer sm.RUnlock()
 	return sm.status
 }
 
