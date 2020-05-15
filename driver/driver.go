@@ -12,6 +12,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/rpc/v2/json2"
 	"github.com/zhanglongx/Aqua/comm"
@@ -39,6 +40,7 @@ type Card interface {
 // Worker defines generic operation
 type Worker interface {
 	Control(c CtlCmd, arg interface{}) interface{}
+	Monitor() bool
 }
 
 // Encoder defines Encoder family operation
@@ -51,6 +53,13 @@ type Encoder interface {
 type Decoder interface {
 	Worker
 	Decode(sess *Session) error
+}
+
+// StatusMonitor struct for monitoring worker status
+type StatusMonitor struct {
+	status bool
+	stop   chan struct{}
+	w      Worker
 }
 
 var (
@@ -83,6 +92,47 @@ func init() {
 
 	Pipes[PipeRTSPIN].Create()
 	Pipes[PipeEncoder].Create()
+}
+
+// updateMonitor goroutine for updating worker status
+func (sm *StatusMonitor) updateMonitor() {
+	isStop := func() bool {
+		select {
+		case <-sm.stop:
+			return true
+		default:
+			return false
+		}
+	}
+
+	tick := time.NewTicker(time.Second * 2)
+	for {
+		if isStop() {
+			break
+		}
+		select {
+		case <-tick.C:
+			sm.status = sm.w.Monitor()
+		}
+
+	}
+}
+
+// StartMonitor start goroutine
+func (sm *StatusMonitor) StartMonitor(w Worker) {
+	sm.stop = make(chan struct{})
+	sm.w = w
+	go sm.updateMonitor()
+}
+
+// StopMonitor send signal to stop goroutine
+func (sm *StatusMonitor) StopMonitor() {
+	sm.stop <- struct{}{}
+}
+
+// GetStatus return current status
+func (sm *StatusMonitor) GetStatus() bool {
+	return sm.status
 }
 
 // GetWorkerName get Worker's Name
