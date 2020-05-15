@@ -36,6 +36,9 @@ type Path struct {
 
 	// workers store all workers can be assigned
 	workers Workers
+
+	// status contains status of workers
+	statusMonitors map[int]*driver.StatusMonitor
 }
 
 var (
@@ -49,6 +52,7 @@ var (
 func (ep *Path) Create(dir string, file string, need []string) error {
 
 	ep.inUse = make(map[int]driver.Worker)
+	ep.statusMonitors = make(map[int]*driver.StatusMonitor)
 
 	ep.workers = Workers{}
 	if err := ep.workers.register(need); err != nil {
@@ -115,6 +119,9 @@ func (ep *Path) Set(ID int, params Params) error {
 				if err := pipe.FreePush(ID); err != nil {
 					return err
 				}
+				if sm, ok := ep.statusMonitors[ID]; ok {
+					sm.StopMonitor()
+				}
 			}
 
 			// TODO: maybe more?
@@ -134,6 +141,9 @@ func (ep *Path) Set(ID int, params Params) error {
 			if err := pipe.AllocPush(ID, w); err != nil {
 				return err
 			}
+			sm := driver.StatusMonitor{}
+			sm.StartMonitor(w)
+			ep.statusMonitors[ID] = &sm
 		}
 
 		ep.inUse[ID] = w
@@ -194,6 +204,18 @@ func (ep *Path) GetWorkers() []string {
 	sort.Strings(all)
 
 	return all
+}
+
+// GetAllStatus return all status
+func (ep *Path) GetAllStatus() map[int]bool {
+	ep.lock.RLock()
+	defer ep.lock.RUnlock()
+
+	allStatus := make(map[int]bool)
+	for i, sm := range ep.statusMonitors {
+		allStatus[i] = sm.GetStatus()
+	}
+	return allStatus
 }
 
 // isWorkerAlloc find if a worker is alloc
