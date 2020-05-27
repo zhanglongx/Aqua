@@ -131,6 +131,14 @@ func (w *TCBinWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	return nil
 }
 
+// Monitor .
+func (w *TCBinWorker) Monitor() bool {
+	if !w.bin.rtspWs[w.workerID].Monitor() || !w.bin.c9830Ws[w.workerID].Monitor() {
+		return false
+	}
+	return true
+}
+
 // Encode method
 func (w *TCBinWorker) Encode(sess *Session) error {
 

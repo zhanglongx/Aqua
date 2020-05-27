@@ -1,8 +1,3 @@
-// Copyright 2020 Longxiao Zhang <zhanglongx@gmail.com>.
-// All rights reserved.
-// Use of this source code is governed by a GPLv3-style
-// license that can be found in the LICENSE file.
-
 package driver
 
 import (
@@ -11,70 +6,50 @@ import (
 	"sync"
 )
 
-// C9830TranscoderName is the sub-card's name
-const C9830TranscoderName string = "C9830"
+// C9831SmartVideoName .
+const C9831SmartVideoName string = "C9831"
 
-// C9830 is the main struct for sub-card
-type C9830 struct {
-	lock sync.RWMutex
-
-	// Card Slot
+// C9831 .
+type C9831 struct {
+	sync.RWMutex
 	Slot int
-
-	// Card IP
-	IP net.IP
-
-	URL string
-
-	rpc map[string]interface{}
+	IP   net.IP
+	URL  string
+	rpc  map[string]interface{}
 }
 
-// C9830Worker is the main struct for sub-card's
-// Worker
-type C9830Worker struct {
+// C9831Worker .
+type C9831Worker struct {
 	workerID int
-
-	card *C9830
+	card     *C9831
 }
 
-// Open method
-func (c *C9830) Open() ([]Worker, error) {
+// Open .
+func (c *C9831) Open() ([]Worker, error) {
 	args := map[string]interface{}{}
-
 	c.rpc = make(map[string]interface{})
-	if err := RPC(c.URL, "transcoder.get", args, &c.rpc); err != nil {
+	if err := RPC(c.URL, "smartvideo.get", args, &c.rpc); err != nil {
 		return nil, err
 	}
 
-	// set to default
 	for i := 0; i < 2; i++ {
 		helperSetMap(c.rpc, i, "recv_cast_mode", 0)
 	}
 
 	var ok string
-	if err := RPC(c.URL, "transcoder.set", c.rpc, &ok); err != nil {
+	if err := RPC(c.URL, "smartvideo.set", c.rpc, &ok); err != nil {
 		return nil, err
 	}
-
-	return []Worker{
-		&C9830Worker{
-			workerID: 0,
-			card:     c,
-		},
-		&C9830Worker{
-			workerID: 1,
-			card:     c,
-		},
-	}, nil
+	return []Worker{}, nil
 }
 
-// Close method
-func (c *C9830) Close() error {
+// Close .
+func (c *C9831) Close() error {
 	return nil
 }
 
-// Control method
-func (w *C9830Worker) Control(c CtlCmd, arg interface{}) interface{} {
+// Control .
+func (w *C9831Worker) Control(c CtlCmd, arg interface{}) interface{} {
 	card := w.card
 
 	switch c {
@@ -117,7 +92,7 @@ func (w *C9830Worker) Control(c CtlCmd, arg interface{}) interface{} {
 }
 
 // Monitor .
-func (w *C9830Worker) Monitor() (ret bool) {
+func (w *C9831Worker) Monitor() (ret bool) {
 	// to handle interface conversion error
 	defer func() {
 		if p := recover(); p != nil {
@@ -150,21 +125,8 @@ func (w *C9830Worker) Monitor() (ret bool) {
 	return
 }
 
-// Encode method
-func (w *C9830Worker) Encode(sess *Session) error {
-	settings := map[string]interface{}{
-		"send_ip":   sess.IP.String(),
-		"send_port": sess.Ports[0],
-	}
-	if err := w.card.set(w.workerID, settings); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Decode method
-func (w *C9830Worker) Decode(sess *Session) error {
+// Decode .
+func (w *C9831Worker) Decode(sess *Session) error {
 	settings := map[string]interface{}{
 		"vid_port": sess.Ports[0],
 	}
@@ -175,17 +137,17 @@ func (w *C9830Worker) Decode(sess *Session) error {
 	return nil
 }
 
-func (c *C9830) set(id int, settings map[string]interface{}) error {
-	c.lock.Lock()
+func (c *C9831) set(id int, settings map[string]interface{}) error {
+	c.Lock()
 
-	defer c.lock.Unlock()
+	defer c.Unlock()
 
 	for k := range settings {
 		helperSetMap(c.rpc, id, k, settings[k])
 	}
 
 	var ok string
-	if err := RPC(c.URL, "transcoder.set", c.rpc, &ok); err != nil {
+	if err := RPC(c.URL, "smartvideo.set", c.rpc, &ok); err != nil {
 		return err
 	}
 
