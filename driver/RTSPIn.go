@@ -35,6 +35,9 @@ type RTSPInWorker struct {
 	card *RTSPIn
 
 	rpc map[string]interface{}
+
+	// for status query
+	sess Session
 }
 
 func newRPC(ip net.IP) map[string]interface{} {
@@ -110,13 +113,53 @@ func (w *RTSPInWorker) Control(c CtlCmd, arg interface{}) interface{} {
 	return nil
 }
 
+// Monitor .
+func (w *RTSPInWorker) Monitor() (ret bool) {
+	// to handle interface conversion error
+	defer func() {
+		if p := recover(); p != nil {
+			// comm.Error.Println(p)
+			ret = false
+		}
+	}()
+
+	ret = true
+
+	params := map[string]interface{}{
+		"transponds": []interface{}{
+			map[string]interface{}{
+				"type":    "udp2udp",
+				"recv_ip": "",
+				"send_ip": w.sess.IP,
+				"send_port": map[string]interface{}{
+					"video": w.sess.Ports[0],
+					"audio": w.sess.Ports[1]},
+			},
+		},
+	}
+
+	var reply interface{}
+	if err := RPC(w.card.URL, "rtsp_client.query", params, &reply); err != nil {
+		ret = false
+	}
+
+	rtspStatus := reply.(map[string]interface{})["transponds"].([]interface{})[0].(map[string]interface{})["status"]
+
+	if rtspStatus != "Established" {
+		ret = false
+	}
+	return
+}
+
 // Encode method
 func (w *RTSPInWorker) Encode(sess *Session) error {
 
 	settings := map[string]interface{}{
 		"send_ip": sess.IP.String(),
 		"video":   sess.Ports[0],
+		"audio":   sess.Ports[1],
 	}
+	w.sess = *sess
 
 	if err := w.set(w.workerID, settings); err != nil {
 		return err
